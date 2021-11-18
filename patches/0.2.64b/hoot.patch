@@ -1,0 +1,231 @@
+diff --git a/hoot-core/src/main/cpp/hoot/core/algorithms/rubber-sheet/RubberSheet.cpp b/hoot-core/src/main/cpp/hoot/core/algorithms/rubber-sheet/RubberSheet.cpp
+index 0f2b35b1e..270a494a4 100644
+--- a/hoot-core/src/main/cpp/hoot/core/algorithms/rubber-sheet/RubberSheet.cpp
++++ b/hoot-core/src/main/cpp/hoot/core/algorithms/rubber-sheet/RubberSheet.cpp
+@@ -53,6 +53,7 @@
+ #include <tgs/RandomForest/DataFrame.h>
+ 
+ // Qt
++#include <QDataStream>
+ #include <QElapsedTimer>
+ 
+ using namespace geos::geom;
+diff --git a/hoot-core/src/main/cpp/hoot/core/algorithms/splitter/OsmMapSplitter.cpp b/hoot-core/src/main/cpp/hoot/core/algorithms/splitter/OsmMapSplitter.cpp
+index d353cd734..69dca21c6 100644
+--- a/hoot-core/src/main/cpp/hoot/core/algorithms/splitter/OsmMapSplitter.cpp
++++ b/hoot-core/src/main/cpp/hoot/core/algorithms/splitter/OsmMapSplitter.cpp
+@@ -35,6 +35,7 @@
+ 
+ //  Qt
+ #include <QElapsedTimer>
++#include <QUrl>
+ 
+ 
+ using geos::geom::Envelope;
+diff --git a/hoot-core/src/main/cpp/hoot/core/cmd/VersionCmd.cpp b/hoot-core/src/main/cpp/hoot/core/cmd/VersionCmd.cpp
+index 2cb628efd..91d13927d 100644
+--- a/hoot-core/src/main/cpp/hoot/core/cmd/VersionCmd.cpp
++++ b/hoot-core/src/main/cpp/hoot/core/cmd/VersionCmd.cpp
+@@ -53,17 +53,19 @@
+ #include <cppunit/Portability.h>
+ #endif
+ 
++#ifdef HOOT_HAVE_NODEJS
+ // NodeJs
+ #include <node/node_version.h>
+ 
+ // v8
+ #include <v8-version-string.h>
++#endif
+ 
+ // tgs
+ #include <tgs/System/SystemInfo.h>
+ 
+-// python
+-#include <patchlevel.h>
++// // python
++// #include <patchlevel.h>
+ 
+ // Protobuf
+ #include <google/protobuf/stubs/common.h>
+@@ -123,9 +125,11 @@ public:
+ #   ifdef HOOT_HAVE_LIBCPPUNIT
+       LOG_DEBUG("CppUnit Version:\t" << CPPUNIT_VERSION);
+ #   endif
++#   ifdef HOOT_HAVE_NODEJS
+     LOG_DEBUG("NodeJs Version:\t" << NODE_VERSION_STRING);
+     LOG_DEBUG("v8 Version:  \t" << V8_VERSION_STRING);
+-    LOG_DEBUG("Python Version:\t" << PY_VERSION);
++#   endif
++    //LOG_DEBUG("Python Version:\t" << PY_VERSION);
+     LOG_DEBUG("Protobuf Version:\t" << QString("%1.%2.%3")
+               .arg(GOOGLE_PROTOBUF_VERSION / 1000000)
+               .arg(GOOGLE_PROTOBUF_VERSION / 1000 % 1000)
+diff --git a/hoot-core/src/main/cpp/hoot/core/elements/OsmMap.cpp b/hoot-core/src/main/cpp/hoot/core/elements/OsmMap.cpp
+index bc199827c..f8edee967 100644
+--- a/hoot-core/src/main/cpp/hoot/core/elements/OsmMap.cpp
++++ b/hoot-core/src/main/cpp/hoot/core/elements/OsmMap.cpp
+@@ -52,6 +52,7 @@
+ 
+ // Qt
+ #include <QTextStream>
++#include <QUrl>
+ 
+ using namespace std;
+ 
+diff --git a/hoot-core/src/main/cpp/hoot/core/language/ToEnglishDictionaryTranslator.cpp b/hoot-core/src/main/cpp/hoot/core/language/ToEnglishDictionaryTranslator.cpp
+index a18ede433..869fdd126 100644
+--- a/hoot-core/src/main/cpp/hoot/core/language/ToEnglishDictionaryTranslator.cpp
++++ b/hoot-core/src/main/cpp/hoot/core/language/ToEnglishDictionaryTranslator.cpp
+@@ -41,6 +41,8 @@ using namespace std;
+ namespace hoot
+ {
+ 
++using UnicodeString = icu_69::UnicodeString;
++
+ QSet<QString> ToEnglishDictionaryTranslator::_streetTypes;
+ 
+ HOOT_FACTORY_REGISTER(ToEnglishTranslator, ToEnglishDictionaryTranslator)
+@@ -244,7 +246,8 @@ QString ToEnglishDictionaryTranslator::transliterateToLatin(const QString& input
+   return result;
+ }
+ 
+-QString ToEnglishDictionaryTranslator::_transform(const shared_ptr<Transliterator>& t, const QString& input) const
++QString ToEnglishDictionaryTranslator::_transform(const shared_ptr<IcuTransliterator>& t,
++  const QString& input) const
+ {
+   UnicodeString str((UChar*)input.constData(), input.size());
+ 
+diff --git a/hoot-core/src/main/cpp/hoot/core/language/ToEnglishDictionaryTranslator.h b/hoot-core/src/main/cpp/hoot/core/language/ToEnglishDictionaryTranslator.h
+index 4f8e9e9e4..95c1453ac 100644
+--- a/hoot-core/src/main/cpp/hoot/core/language/ToEnglishDictionaryTranslator.h
++++ b/hoot-core/src/main/cpp/hoot/core/language/ToEnglishDictionaryTranslator.h
+@@ -40,6 +40,9 @@
+ namespace hoot
+ {
+ 
++//using Transliterator = icu::Transliterator;
++using IcuTransliterator = icu_69::Transliterator;
++
+ class ToEnglishTranslateDictionary;
+ 
+ /**
+@@ -104,7 +107,7 @@ private:
+   static QSet<QString> _streetTypes;
+   QRegExp _whiteSpace;
+ 
+-  QString _transform(const std::shared_ptr<icu::Transliterator>& t, const QString& input) const;
++  QString _transform(const std::shared_ptr<IcuTransliterator>& t, const QString& input) const;
+ };
+ 
+ }
+diff --git a/hoot-core/src/main/cpp/hoot/core/language/ToEnglishTranslateDictionary.cpp b/hoot-core/src/main/cpp/hoot/core/language/ToEnglishTranslateDictionary.cpp
+index 4de5dea87..c76230814 100644
+--- a/hoot-core/src/main/cpp/hoot/core/language/ToEnglishTranslateDictionary.cpp
++++ b/hoot-core/src/main/cpp/hoot/core/language/ToEnglishTranslateDictionary.cpp
+@@ -57,7 +57,7 @@ _transliterationCachingEnabled(false)
+ 
+   UErrorCode error = U_ZERO_ERROR;
+ 
+-  _titler.reset(Transliterator::createInstance("Any-Title", UTRANS_FORWARD, error));
++  _titler.reset(IcuTransliterator::createInstance("Any-Title", UTRANS_FORWARD, error));
+   if (_titler == nullptr || error != U_ZERO_ERROR)
+   {
+     LOG_ERROR("transliterator error code: " << error);
+@@ -65,7 +65,7 @@ _transliterationCachingEnabled(false)
+   }
+ 
+   _transliterator.reset(
+-    Transliterator::createInstance("Any-Latin; Latin-ASCII", UTRANS_FORWARD, error));
++    IcuTransliterator::createInstance("Any-Latin; Latin-ASCII", UTRANS_FORWARD, error));
+   if (_transliterator == nullptr || error != U_ZERO_ERROR)
+   {
+     LOG_ERROR("transliterator error code: " << error);
+diff --git a/hoot-core/src/main/cpp/hoot/core/language/ToEnglishTranslateDictionary.h b/hoot-core/src/main/cpp/hoot/core/language/ToEnglishTranslateDictionary.h
+index 0fc7a8390..213296a4b 100644
+--- a/hoot-core/src/main/cpp/hoot/core/language/ToEnglishTranslateDictionary.h
++++ b/hoot-core/src/main/cpp/hoot/core/language/ToEnglishTranslateDictionary.h
+@@ -40,6 +40,8 @@
+ namespace hoot
+ {
+ 
++using IcuTransliterator = icu_69::Transliterator;
++
+ /**
+  * (Singleton)
+  */
+@@ -58,8 +60,8 @@ public:
+     const QString& originalText, const QString& transliteratedText) const;
+ 
+   bool transliterationCachingEnabled() const { return _transliterationCachingEnabled; }
+-  std::shared_ptr<Transliterator> getTransliterator() const { return _transliterator; }
+-  std::shared_ptr<Transliterator> getTitler() const { return _titler; }
++  std::shared_ptr<IcuTransliterator> getTransliterator() const { return _transliterator; }
++  std::shared_ptr<IcuTransliterator> getTitler() const { return _titler; }
+ 
+ private:
+ 
+@@ -67,8 +69,8 @@ private:
+ 
+   QMap<QString, QStringList> _translations;
+   std::shared_ptr<Tgs::LruCache<QString, QString>> _transliterationCache;
+-  std::shared_ptr<Transliterator> _transliterator;
+-  std::shared_ptr<Transliterator> _titler;
++  std::shared_ptr<IcuTransliterator> _transliterator;
++  std::shared_ptr<IcuTransliterator> _titler;
+   bool _transliterationCachingEnabled;
+ 
+   ToEnglishTranslateDictionary();
+diff --git a/scripts/core/CreateConfigCode.py b/scripts/core/CreateConfigCode.py
+index e5e35cf61..95b945747 100755
+--- a/scripts/core/CreateConfigCode.py
++++ b/scripts/core/CreateConfigCode.py
+@@ -12,14 +12,16 @@ import textwrap
+ import datetime
+ 
+ if (len(sys.argv) != 4):
+-    print "Usage:"
+-    print sys.argv[0] + " (config file) (output header) (output defaults header)"
++    print("Usage:")
++    print(sys.argv[0] + " (config file) (output header) (output defaults header)")
+     sys.exit(-1)
+ 
+ fn = sys.argv[1]
+ headerFn = sys.argv[2]
+ defaultsHeaderFn = sys.argv[3]
+ 
++PYTHON_MAJOR_VERSION = sys.version_info[0]
++
+ notice = """/*
+  * This file is part of Hootenanny.
+  *
+@@ -56,7 +58,10 @@ notice = """/*
+ notice = notice.replace("{XXXX}", datetime.date.today().strftime("%Y"));
+ 
+ def escapeString(s):
+-    return s.encode('string-escape').replace("\"", "\\\"");
++    if PYTHON_MAJOR_VERSION < 3:
++        return s.encode('string-escape').replace("\"", "\\\"")
++    else:
++        return s.encode('unicode_escape').decode("utf-8").replace("\"", "\\\"")
+ 
+ def stripDefaultValue(s):
+     m = re.search("\\* Default Value: `(.*)`", s)
+@@ -120,7 +125,7 @@ def loadAsciiDoc(fn):
+                 element['default'] = stripDefaultValue(l)
+                 inBody = True
+                 inList = False
+-  	elif (ls.startswith("* Minimum: ")):
++        elif (ls.startswith("* Minimum: ")):
+             if (element['type'] == 'int'):
+                 element['minimum'] = stripInt("Minimum", ls)
+             elif (element['type'] == 'double'):
+@@ -185,7 +190,7 @@ def loadAsciiDoc(fn):
+         else:
+             raise Exception("unexpected line (%d) in: %s line: %s" % (ln, section, l))
+ 
+-    for k, v in result.iteritems():
++    for k, v in result.items():
+         v['description'] = v['description'].strip();
+ 
+     return result

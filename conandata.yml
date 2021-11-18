@@ -1,0 +1,4 @@
+patches:
+  "0.2.64b":
+    - patch_file: "patches/0.2.64b/hoot.patch"
+      base_path: "hoot"
