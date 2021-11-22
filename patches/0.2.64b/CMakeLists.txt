@@ -202,6 +202,8 @@ list(REMOVE_ITEM HOOT_CORE_FILES
     ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/phone/PhoneNumberLocator.cpp
     ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/phone/PhoneNumberNormalizer.cpp
     ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/phone/PhoneNumberParser.cpp
+    ${HOOT_CORE_SRC_PATH}/hoot/core/visitors/NormalizePhoneNumbersVisitor.cpp
+    ${HOOT_CORE_SRC_PATH}/hoot/core/visitors/PhoneNumberLocateVisitor.cpp
 )
 
 

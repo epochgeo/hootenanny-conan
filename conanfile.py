@@ -24,7 +24,7 @@ class HootenannyConan(ConanFile):
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {
         "shared": False,
-        "fPIC": True
+        "fPIC": True,
     }
 
     # Sources are located in the same place as this recipe, copy them to the recipe
@@ -34,8 +34,9 @@ class HootenannyConan(ConanFile):
 	"boost/1.71.0",
         "gdal/3.2.1",
         "opencv/2.4.13.7",
-        "qt/5.15.2",
         "openssl/1.1.1l",
+	"protobuf/3.15.5",
+        "qt/5.15.2",
         # explicity require libtiff to avoid a conflict in gdal/opencv
         "libtiff/4.3.0",
         "liboauthcpp/0.1@test/debug",
@@ -90,6 +91,7 @@ class HootenannyConan(ConanFile):
         copy_me = [
             (f"patches/{self.version}/HootConfig.h", "/hoot-core/src/main/cpp/hoot/core/"),
             (f"patches/{self.version}/TgsConfig.h", "/tgs/src/main/cpp/tgs/"),
+            (f"patches/{self.version}/VersionDefines.h", "/hoot-core/src/main/cpp/hoot/core/info/"),
             (f"patches/{self.version}/CMakeLists.txt", "/."),
         ]
 
@@ -107,7 +109,7 @@ class HootenannyConan(ConanFile):
         #self.run("make -j`nproc`")
 
     def package(self):
-        self.run(f"cmake --install {self.source_folder}")
+        #self.run("cmake --install " + self.source_folder)
         self.copy("*.h", dst="include", src="hoot/hoot-core/src/main/cpp/")
         self.copy("*.lib", dst="lib", keep_path=False)
         self.copy("*.dll", dst="bin", keep_path=False)
