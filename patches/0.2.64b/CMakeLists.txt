@@ -8,13 +8,16 @@ set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -w")
 # We're linking statically and for some reason the version check fails in centos 8
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DQT_NO_VERSION_TAGGING")
 
-set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
+#set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
 
 # v8
-find_path(V8_HEADER_PATH v8.h
-    /usr/include/node/
-    /usr/include/nodejs/deps/v8/include/
+find_path(V8_HEADER_PATH 
+    libplatform/libplatform.h
+    PATHS /usr/include/node/ /usr/include/nodejs/deps/v8/include/
+    REQUIRED
 )
+message("v8")
+message(${V8_HEADER_PATH})
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
@@ -36,7 +39,7 @@ message(${HOOT_HOME})
 
 # This avoids linker errors w/ older versions of glibc
 # https://github.com/AppImage/AppImageKit/tree/stable/v1.0/LibcWrapGenerator
-set(CMAKE_CXX_FLAGS  "-include ${HOOT_HOME}/libcwrap.h ${CMAKE_CXX_FLAGS}")
+#set(CMAKE_CXX_FLAGS  "-include ${HOOT_HOME}/libcwrap.h ${CMAKE_CXX_FLAGS}")
 
 #
 # valac - this is used to avoid glibc errors
@@ -46,15 +49,15 @@ set(CMAKE_CXX_FLAGS  "-include ${HOOT_HOME}/libcwrap.h ${CMAKE_CXX_FLAGS}")
 # valac --pkg gee-0.8 --pkg posix --pkg glib-2.0 --pkg gio-2.0 LibcWrapGenerator.vala
 #  ./LibcWrapGenerator --target 2.10 --libdir /lib --output libcwrap.h
 
-message(${HOOT_HOME}/libcwrap.h)
-add_custom_command(
-    OUTPUT
-        ${HOOT_HOME}/libcwrap.h
-    COMMAND 
-        wget "https://raw.githubusercontent.com/AppImage/AppImageKit/stable/v1.0/LibcWrapGenerator/LibcWrapGenerator.vala" ";"
-        valac --pkg gee-0.8 --pkg posix --pkg glib-2.0 --pkg gio-2.0 LibcWrapGenerator.vala ";"
-        ./LibcWrapGenerator --target 2.10 --libdir /lib --output ${HOOT_HOME}/libcwrap.h
-)
+# message(${HOOT_HOME}/libcwrap.h)
+# add_custom_command(
+#     OUTPUT
+#         ${HOOT_HOME}/libcwrap.h
+#     COMMAND 
+#         wget "https://raw.githubusercontent.com/AppImage/AppImageKit/stable/v1.0/LibcWrapGenerator/LibcWrapGenerator.vala" ";"
+#         valac --pkg gee-0.8 --pkg posix --pkg glib-2.0 --pkg gio-2.0 LibcWrapGenerator.vala ";"
+#         ./LibcWrapGenerator --target 2.10 --libdir /lib --output ${HOOT_HOME}/libcwrap.h
+# )
 
 #
 # TBS
@@ -71,7 +74,6 @@ file(GLOB TBS_FILES CONFIGURE_DEPENDS
 
 add_library(Tbs
     ${TBS_FILES}
-    ${HOOT_HOME}/libcwrap.h
 )
 target_include_directories(Tbs PRIVATE ${TBS_SRC_PATH})
 target_link_libraries(Tbs ${CONAN_LIBS})
@@ -123,7 +125,6 @@ file(GLOB TGS_SRC_FILES CONFIGURE_DEPENDS
 set(TGS_FILES 
     ${TGS_SRC_FILES}
     ${TGS_HEADER_FILES}
-    ${HOOT_HOME}/libcwrap.h
 )
 add_library(Tgs ${TGS_FILES})
 
@@ -183,7 +184,6 @@ add_custom_command(
 file(GLOB_RECURSE HOOT_CORE_FILES CONFIGURE_DEPENDS 
     ${HOOT_CORE_SRC_PATH}/*.h
     ${HOOT_CORE_SRC_PATH}/*.cpp
-    ${HOOT_HOME}/libcwrap.h
 )
 
 # Remove libpostal dependencies, we can add this back later.
@@ -194,6 +194,14 @@ list(REMOVE_ITEM HOOT_CORE_FILES
     ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/address/AddressNormalizer.cpp
     ${HOOT_CORE_SRC_PATH}/hoot/core/language/ToEnglishAddressTranslator.cpp
     ${HOOT_CORE_SRC_PATH}/hoot/core/schema/PythonSchemaTranslator.cpp
+)
+
+# Remove phonenumber dependencies, we can add this back later.
+list(REMOVE_ITEM HOOT_CORE_FILES 
+    ${HOOT_CORE_SRC_PATH}/hoot/core/algorithms/extractors/poi-polygon/PoiPolygonPhoneNumberScoreExtractor.cpp
+    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/phone/PhoneNumberLocator.cpp
+    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/phone/PhoneNumberNormalizer.cpp
+    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/phone/PhoneNumberParser.cpp
 )
 
 

@@ -31,6 +31,7 @@ class HootenannyConan(ConanFile):
     exports_sources = "CMakeLists.txt", "hoot/*"
 
     requires = [
+	"boost/1.71.0",
         "gdal/3.2.1",
         "opencv/2.4.13.7",
         "qt/5.15.2",

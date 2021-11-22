@@ -83,7 +83,7 @@
 /* #undef HAVE_LIBOCTINTERP */
 
 /* Define to 1 if you have the `stxxl' library (-lstxxl). */
-/* #undef HAVE_LIBSTXXL */
+#undef HAVE_LIBSTXXL
 
 /* Define to 1 if you have the <limits.h> header file. */
 #define HOOT_HAVE_LIMITS_H 1
