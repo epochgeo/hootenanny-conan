@@ -22,10 +22,23 @@ class HootenannyConan(ConanFile):
     # Binary configuration
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False], "fPIC": [True, False]}
-    default_options = {"shared": False, "fPIC": True}
+    default_options = {
+        "shared": False,
+        "fPIC": True
+    }
 
     # Sources are located in the same place as this recipe, copy them to the recipe
     exports_sources = "CMakeLists.txt", "hoot/*"
+
+    requires = [
+        "gdal/3.2.1",
+        "opencv/2.4.13.7",
+        "qt/5.15.2",
+        "openssl/1.1.1l",
+        # explicity require libtiff to avoid a conflict in gdal/opencv
+        "libtiff/4.3.0",
+        "liboauthcpp/0.1@test/debug",
+    ]
 
     generators = "cmake"
     # scm = {
@@ -103,11 +116,3 @@ class HootenannyConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.libs = ["HootCore"]
-
-    def requirements(self):
-        self.requires("gdal/3.2.1")
-        self.requires("opencv/2.4.13.7")
-        self.requires("libtiff/4.3.0")
-        self.requires("qt/5.15.2")
-        self.requires("openssl/1.1.1l")
-        self.requires("liboauthcpp/0.1@test/debug")

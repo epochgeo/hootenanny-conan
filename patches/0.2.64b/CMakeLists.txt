@@ -5,6 +5,10 @@ add_definitions("-std=c++11")
 
 # Remove me when it all works!
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -w")
+# We're linking statically and for some reason the version check fails in centos 8
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DQT_NO_VERSION_TAGGING")
+
+set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
 
 # v8
 find_path(V8_HEADER_PATH v8.h
@@ -12,13 +16,18 @@ find_path(V8_HEADER_PATH v8.h
     /usr/include/nodejs/deps/v8/include/
 )
 
-# Python Includes
-find_path(PYTHON_HEADER_PATH Python.h
-    /usr/include/python3.8/
-)
-
-#include(${CMAKE_CURRENT_LIST_DIR}/../conanbuildinfo.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
+
+# Remove unused Qt libraries. Is this necessary or will the linker figure it out?
+list(REMOVE_ITEM CONAN_LIBS
+    Qt5OpenGLExtensions
+    Qt5PrintSupport
+    Qt5Widgets
+    Qt5OpenGL
+    Qt5OpenGLExtensions
+    Qt5Gui
+)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 
@@ -27,7 +36,7 @@ message(${HOOT_HOME})
 
 # This avoids linker errors w/ older versions of glibc
 # https://github.com/AppImage/AppImageKit/tree/stable/v1.0/LibcWrapGenerator
-set(CMAKE_CXX_FLAGS  "-include ${HOOT_HOME}/libcwrap.h ${CMAKE_CXX_FLAGS} -w")
+set(CMAKE_CXX_FLAGS  "-include ${HOOT_HOME}/libcwrap.h ${CMAKE_CXX_FLAGS}")
 
 #
 # valac - this is used to avoid glibc errors
@@ -36,6 +45,16 @@ set(CMAKE_CXX_FLAGS  "-include ${HOOT_HOME}/libcwrap.h ${CMAKE_CXX_FLAGS} -w")
 # wget https://raw.githubusercontent.com/AppImage/AppImageKit/stable/v1.0/LibcWrapGenerator/LibcWrapGenerator.vala
 # valac --pkg gee-0.8 --pkg posix --pkg glib-2.0 --pkg gio-2.0 LibcWrapGenerator.vala
 #  ./LibcWrapGenerator --target 2.10 --libdir /lib --output libcwrap.h
+
+message(${HOOT_HOME}/libcwrap.h)
+add_custom_command(
+    OUTPUT
+        ${HOOT_HOME}/libcwrap.h
+    COMMAND 
+        wget "https://raw.githubusercontent.com/AppImage/AppImageKit/stable/v1.0/LibcWrapGenerator/LibcWrapGenerator.vala" ";"
+        valac --pkg gee-0.8 --pkg posix --pkg glib-2.0 --pkg gio-2.0 LibcWrapGenerator.vala ";"
+        ./LibcWrapGenerator --target 2.10 --libdir /lib --output ${HOOT_HOME}/libcwrap.h
+)
 
 #
 # TBS
@@ -50,10 +69,11 @@ file(GLOB TBS_FILES CONFIGURE_DEPENDS
     ${TBS_SRC_PATH}/tbs/optimization/*.cpp
 )
 
-add_library(Tbs ${TBS_FILES})
-
-target_include_directories(
-    Tbs PRIVATE ${TBS_SRC_PATH})
+add_library(Tbs
+    ${TBS_FILES}
+    ${HOOT_HOME}/libcwrap.h
+)
+target_include_directories(Tbs PRIVATE ${TBS_SRC_PATH})
 target_link_libraries(Tbs ${CONAN_LIBS})
 
 #
@@ -63,7 +83,8 @@ target_link_libraries(Tbs ${CONAN_LIBS})
 set(TGS_SRC_PATH ${HOOT_HOME}/tgs/src/main/cpp)
 
 file(GLOB_RECURSE TGS_HEADER_FILES CONFIGURE_DEPENDS 
-    ${TGS_SRC_PATH}/*.h)
+    ${TGS_SRC_PATH}/*.h
+)
 
 # We're specifying specific files b/c not all files are actively maintained anymore.
 file(GLOB TGS_SRC_FILES CONFIGURE_DEPENDS
@@ -99,11 +120,14 @@ file(GLOB TGS_SRC_FILES CONFIGURE_DEPENDS
     ${TGS_SRC_PATH}/tgs/System/*.cpp
 )
 
-set(TGS_FILES ${TGS_SRC_FILES} ${TGS_HEADER_FILES})
+set(TGS_FILES 
+    ${TGS_SRC_FILES}
+    ${TGS_HEADER_FILES}
+    ${HOOT_HOME}/libcwrap.h
+)
 add_library(Tgs ${TGS_FILES})
 
-target_include_directories(
-    Tgs PRIVATE ${HOOT_HOME}/tgs/src/main/cpp/)
+target_include_directories(Tgs PRIVATE ${HOOT_HOME}/tgs/src/main/cpp/)
 target_link_libraries(Tgs ${CONAN_LIBS})
 
 set(HOOT_CORE_SRC_PATH ${HOOT_HOME}/hoot-core/src/main/cpp/)
@@ -159,6 +183,7 @@ add_custom_command(
 file(GLOB_RECURSE HOOT_CORE_FILES CONFIGURE_DEPENDS 
     ${HOOT_CORE_SRC_PATH}/*.h
     ${HOOT_CORE_SRC_PATH}/*.cpp
+    ${HOOT_HOME}/libcwrap.h
 )
 
 # Remove libpostal dependencies, we can add this back later.
