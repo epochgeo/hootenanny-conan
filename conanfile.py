@@ -25,6 +25,14 @@ class HootenannyConan(ConanFile):
     default_options = {
         "shared": False,
         "fPIC": True,
+	"qt:shared": False,
+	"gdal:shared": False,
+	"boost:shared": False,
+	"opencv:shared": False,
+	"openssl:shared": False,
+	"protobuf:shared": False,
+	"libtiff:shared": False,
+	"liboauthcpp:shared": False,
     }
 
     # Sources are located in the same place as this recipe, copy them to the recipe
