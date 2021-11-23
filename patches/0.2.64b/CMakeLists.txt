@@ -3,6 +3,11 @@ project(hootenanny)
 
 add_definitions("-std=c++11")
 
+find_program(CCACHE_FOUND ccache)
+if(CCACHE_FOUND)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+endif(CCACHE_FOUND)
+
 # Remove me when it all works!
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -w")
 # We're linking statically and for some reason the version check fails in centos 8
@@ -10,14 +15,54 @@ set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DQT_NO_VERSION_TAGGING")
 
 #set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
 
+#
 # v8
+#
 find_path(V8_HEADER_PATH 
     libplatform/libplatform.h
     PATHS /usr/include/node/ /usr/include/nodejs/deps/v8/include/
     REQUIRED
 )
-message("v8")
-message(${V8_HEADER_PATH})
+find_library(V8_LIBS
+    v8
+    HINTS /usr/lib/x86_64-linux-gnu/ /usr/lib64
+    REQUIRED
+)
+
+#
+# node.js
+#
+set(NODEJS_SEARCH_PATHS 
+    /usr/include/nodejs /usr/include/node /usr/include/nodejs/deps/uv/include)
+find_path(HOOT_HAVE_NODEJS_SRC_NODE_H 
+    NAMES nodejs/src/node.h
+    HINTS ${NODEJS_SEARCH_PATHS}
+)
+if (EXISTS ${HOOT_HAVE_NODEJS_SRC_NODE_H})
+    add_compile_definitions(HOOT_HAVE_NODEJS_SRC_NODE_H)
+endif()
+
+find_path(HOOT_HAVE_NODEJS_NODE_H 
+    NAMES nodejs/node.h
+    HINTS ${NODEJS_SEARCH_PATHS}
+)
+if (EXISTS ${HOOT_HAVE_NODEJS_NODE_H})
+    add_compile_definitions(HOOT_HAVE_NODEJS_NODE_H)
+endif()
+
+find_path(HOOT_HAVE_NODE_NODE_H 
+    NAMES node/node.h
+    HINTS ${NODEJS_SEARCH_PATHS}
+)
+if (EXISTS ${HOOT_HAVE_NODE_NODE_H})
+    add_compile_definitions(HOOT_HAVE_NODE_NODE_H)
+endif()
+
+find_library(NODEJS_LIBS
+    node
+    HINTS /usr/lib/x86_64-linux-gnu/ /usr/lib64
+    REQUIRED
+)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
@@ -36,28 +81,6 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 
 set(HOOT_HOME ${PROJECT_SOURCE_DIR})
 message(${HOOT_HOME})
-
-# This avoids linker errors w/ older versions of glibc
-# https://github.com/AppImage/AppImageKit/tree/stable/v1.0/LibcWrapGenerator
-#set(CMAKE_CXX_FLAGS  "-include ${HOOT_HOME}/libcwrap.h ${CMAKE_CXX_FLAGS}")
-
-#
-# valac - this is used to avoid glibc errors
-#
-
-# wget https://raw.githubusercontent.com/AppImage/AppImageKit/stable/v1.0/LibcWrapGenerator/LibcWrapGenerator.vala
-# valac --pkg gee-0.8 --pkg posix --pkg glib-2.0 --pkg gio-2.0 LibcWrapGenerator.vala
-#  ./LibcWrapGenerator --target 2.10 --libdir /lib --output libcwrap.h
-
-# message(${HOOT_HOME}/libcwrap.h)
-# add_custom_command(
-#     OUTPUT
-#         ${HOOT_HOME}/libcwrap.h
-#     COMMAND 
-#         wget "https://raw.githubusercontent.com/AppImage/AppImageKit/stable/v1.0/LibcWrapGenerator/LibcWrapGenerator.vala" ";"
-#         valac --pkg gee-0.8 --pkg posix --pkg glib-2.0 --pkg gio-2.0 LibcWrapGenerator.vala ";"
-#         ./LibcWrapGenerator --target 2.10 --libdir /lib --output ${HOOT_HOME}/libcwrap.h
-# )
 
 #
 # TBS
@@ -228,5 +251,65 @@ target_precompile_headers(
     ${HOOT_CORE_SRC_PATH}/hoot/core/HootCoreStable.h
 )
 target_link_libraries(HootCore ${CONAN_LIBS} Tbs Tgs)
+
+#
+# Hoot JS
+#
+
+file(GLOB_RECURSE HOOT_JS_FILES CONFIGURE_DEPENDS 
+    ${HOOT_JS_SRC_PATH}/*.h
+    ${HOOT_JS_SRC_PATH}/*.cpp
+)
+
+add_library(HootJs
+    ${HOOT_JS_FILES}
+)
+target_include_directories(
+    HootJs PRIVATE 
+    ${HOOT_CORE_SRC_PATH}
+    ${TBS_SRC_PATH}
+    ${TGS_SRC_PATH}
+    ${HOOT_JS_SRC_PATH}
+    ${NODEJS_HEADER_PATH}
+    ${V8_HEADER_PATH}
+)
+target_link_libraries(
+    HootJs
+    HootCore ${CONAN_LIBS} Tbs Tgs
+    ${NODEJS_LIBS}
+    ${V8_LIBS}
+)
+
+#
+# Hoot Cmd
+#
+
+set(HOOT_CMD_SRC_PATH ${HOOT_HOME}/hoot-cmd/src/main/cpp/)
+
+file(GLOB_RECURSE HOOT_CMD_FILES CONFIGURE_DEPENDS 
+    ${HOOT_CMD_SRC_PATH}/*.h
+    ${HOOT_CMD_SRC_PATH}/*.cpp
+)
+
+add_executable(HootCmd
+    ${HOOT_CMD_FILES}
+)
+target_include_directories(
+    HootCmd PRIVATE 
+    ${HOOT_CORE_SRC_PATH}
+    ${TBS_SRC_PATH}
+    ${TGS_SRC_PATH}
+    ${HOOT_JS_SRC_PATH}
+    ${V8_HEADER_PATH}
+)
+target_link_libraries(
+    HootCmd 
+    HootCore
+    Tbs Tgs
+    HootJs
+    ${CONAN_LIBS}
+    ${V8_LIBS}
+)
+
 
 install(TARGETS ${installable_libs} DESTINATION lib)

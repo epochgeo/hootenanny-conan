@@ -25,25 +25,25 @@ class HootenannyConan(ConanFile):
     default_options = {
         "shared": False,
         "fPIC": True,
-	"qt:shared": False,
-	"gdal:shared": False,
-	"boost:shared": False,
-	"opencv:shared": False,
-	"openssl:shared": False,
-	"protobuf:shared": False,
-	"libtiff:shared": False,
-	"liboauthcpp:shared": False,
+        "qt:shared": False,
+        "gdal:shared": False,
+        "boost:shared": False,
+        "opencv:shared": False,
+        "openssl:shared": False,
+        "protobuf:shared": False,
+        "libtiff:shared": False,
+        "liboauthcpp:shared": False,
     }
 
     # Sources are located in the same place as this recipe, copy them to the recipe
     exports_sources = "CMakeLists.txt", "hoot/*"
 
     requires = [
-	"boost/1.71.0",
+        "boost/1.71.0",
         "gdal/3.2.1",
         "opencv/2.4.13.7",
         "openssl/1.1.1l",
-	"protobuf/3.15.5",
+        "protobuf/3.15.5",
         "qt/5.15.2",
         # explicity require libtiff to avoid a conflict in gdal/opencv
         "libtiff/4.3.0",
