@@ -1,19 +1,76 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.5)
 project(hootenanny)
 
 add_definitions("-std=c++11")
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
 endif(CCACHE_FOUND)
 
+
 # Remove me when it all works!
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -w")
 # We're linking statically and for some reason the version check fails in centos 8
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DQT_NO_VERSION_TAGGING")
+#set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DQT_NO_VERSION_TAGGING")
+
+# This define is required for the precompiled headers to work properly
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DQT_CORE_LIB")
 
 #set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
+
+#find_package(Boost)
+#include_directories(${Boost_INCLUDE_DIRS})
+#find_package(GDAL)
+#include_directories(${GDAL_INCLUDE_DIRS})
+#find_package(coinglpk MODULE REQUIRED)
+#find_package(liboauthcpp)
+#include_directories(${liboauthcpp_INCLUDE_DIRS})
+#find_package(OpenCV)
+#include_directories(${opencv_INCLUDE_DIRS})
+#find_package(OpenSSL)
+#include_directories(${OpenSSL_INCLUDE_DIRS})
+#find_package(Protobuf)
+#include_directories(${protobuf_INCLUDE_DIRS})
+#find_package(Qt5)
+#include_directories(${Qt5_INCLUDE_DIRS})
+#find_package(libphonenumber REQUIRED)
+#include_directories(${libphonenumber_INCLUDE_DIRS})
+#link_directories(${libphonenumber_LIB_DIRS})
+
+find_library(STXXL_LIBRARIES stxxl REQUIRED)
+find_library(libpostal_LIBRARIES postal REQUIRED)
+
+set(
+    CONAN_LIBS
+    ${Boost_LIBRARIES}
+    ${GDAL_LIBRARIES}
+    ${GLPK_LIBRARIES}
+    ${liboauthcpp_LIBRARIES}
+    ${libpostal_LIBRARIES}
+    ${opencv_LIBRARIES}
+    ${OpenSSL_LIBRARIES}
+    ${protobuf_LIBRARIES}
+    ${Qt5_LIBRARIES}
+    ${STXXL_LIBRARIES}
+    libphonenumber.a
+    libgeocoding.a
+    gssapi_krb5
+)
+
+set(
+    CONAN_INCLUDE_DIRS
+    ${Boost_INCLUDE_DIRS}
+    ${GDAL_INCLUDE_DIRS}
+    ${GLPK_INCLUDE_DIRS}
+    ${liboauthcpp_INCLUDE_DIRS}
+    ${opencv_INCLUDE_DIRS}
+    ${OpenSSL_INCLUDE_DIRS}
+    ${protobuf_INCLUDE_DIRS}
+    ${Qt5_INCLUDE_DIRS}
+    ${libphonenumber_INCLUDE_DIRS}
+)
 
 #
 # v8
@@ -28,6 +85,7 @@ find_library(V8_LIBS
     HINTS /usr/lib/x86_64-linux-gnu/ /usr/lib64
     REQUIRED
 )
+message(${V8_LIBS})
 
 #
 # node.js
@@ -58,26 +116,50 @@ if (EXISTS ${HOOT_HAVE_NODE_NODE_H})
     add_compile_definitions(HOOT_HAVE_NODE_NODE_H)
 endif()
 
-find_library(NODEJS_LIBS
-    node
-    HINTS /usr/lib/x86_64-linux-gnu/ /usr/lib64
-    REQUIRED
-)
+#find_library(NODEJS_LIBS
+#    node
+#    HINTS /usr/lib/x86_64-linux-gnu/ /usr/lib64
+#    REQUIRED
+#)
+set(NODEJS_LIBS "")
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/conanbuildinfo.cmake)
+#include(${CMAKE_CURRENT_SOURCE_DIR}/../conanbuildinfo.txt)
+#include(${CMAKE_CURRENT_LIST_DIR}/../conanbuildinfo.txt)
+#include(${CMAKE_BINARY_DIR}/conan_toolchain.cmake)
+#include("../conanbuildinfo.txt")
+message(${CMAKE_CURRENT_SOURCE_DIR})
+string(CONCAT FOO ${CMAKE_CURRENT_SOURCE_DIR} "/../conanbuildinfo.txt")
+message(${FOO})
+get_filename_component(BAR "${CMAKE_CURRENT_SOURCE_DIR}/../conanbuildinfo.txt" ABSOLUTE)
+message(${BAR})
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
-# Remove unused Qt libraries. Is this necessary or will the linker figure it out?
+find_package(Qt5 REQUIRED)
+#set(CMAKE_AUTOMOC ON)
+
+# libphonenumber builds both static and dynamic, remove dynamic linking
 list(REMOVE_ITEM CONAN_LIBS
-    Qt5OpenGLExtensions
-    Qt5PrintSupport
-    Qt5Widgets
-    Qt5OpenGL
-    Qt5OpenGLExtensions
-    Qt5Gui
+    phonenumber
 )
 
-option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
+# Add libphonenumber static linking back in.
+list(APPEND CONAN_LIBS
+    libphonenumber.a
+    libgeocoding.a
+)
+
+# Remove unused Qt libraries. Is this necessary or will the linker figure it out?
+#list(REMOVE_ITEM CONAN_LIBS
+#    Qt5OpenGLExtensions
+#    Qt5PrintSupport
+#    Qt5Widgets
+#    Qt5OpenGL
+#    Qt5OpenGLExtensions
+#)
+
+#option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
+#option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 set(HOOT_HOME ${PROJECT_SOURCE_DIR})
 message(${HOOT_HOME})
@@ -96,10 +178,14 @@ file(GLOB TBS_FILES CONFIGURE_DEPENDS
 )
 
 add_library(Tbs
+    STATIC
     ${TBS_FILES}
 )
 target_include_directories(Tbs PRIVATE ${TBS_SRC_PATH})
-target_link_libraries(Tbs ${CONAN_LIBS})
+target_link_libraries(
+    Tbs
+    ${CONAN_LIBS}
+)
 
 #
 # TGS
@@ -149,7 +235,10 @@ set(TGS_FILES
     ${TGS_SRC_FILES}
     ${TGS_HEADER_FILES}
 )
-add_library(Tgs ${TGS_FILES})
+add_library(Tgs
+    STATIC
+    ${TGS_FILES}
+)
 
 target_include_directories(Tgs PRIVATE ${HOOT_HOME}/tgs/src/main/cpp/)
 target_link_libraries(Tgs ${CONAN_LIBS})
@@ -209,34 +298,47 @@ file(GLOB_RECURSE HOOT_CORE_FILES CONFIGURE_DEPENDS
     ${HOOT_CORE_SRC_PATH}/*.cpp
 )
 
-# Remove libpostal dependencies, we can add this back later.
+# Remove python translation -- not used much anymore
 list(REMOVE_ITEM HOOT_CORE_FILES 
-    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/address/LegacyVertexMatcher.cpp
-    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/address/LibPostalInit.cpp
-    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/address/AddressParser.cpp
-    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/address/AddressNormalizer.cpp
-    ${HOOT_CORE_SRC_PATH}/hoot/core/language/ToEnglishAddressTranslator.cpp
     ${HOOT_CORE_SRC_PATH}/hoot/core/schema/PythonSchemaTranslator.cpp
 )
 
-# Remove phonenumber dependencies, we can add this back later.
-list(REMOVE_ITEM HOOT_CORE_FILES 
-    ${HOOT_CORE_SRC_PATH}/hoot/core/algorithms/extractors/poi-polygon/PoiPolygonPhoneNumberScoreExtractor.cpp
-    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/phone/PhoneNumberLocator.cpp
-    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/phone/PhoneNumberNormalizer.cpp
-    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/phone/PhoneNumberParser.cpp
-    ${HOOT_CORE_SRC_PATH}/hoot/core/visitors/NormalizePhoneNumbersVisitor.cpp
-    ${HOOT_CORE_SRC_PATH}/hoot/core/visitors/PhoneNumberLocateVisitor.cpp
-)
+# Remove libpostal dependencies, we can add this back later.
+#list(REMOVE_ITEM HOOT_CORE_FILES 
+#    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/address/LegacyVertexMatcher.cpp
+#    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/address/LibPostalInit.cpp
+#    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/address/AddressParser.cpp
+#    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/address/AddressNormalizer.cpp
+#    ${HOOT_CORE_SRC_PATH}/hoot/core/language/ToEnglishAddressTranslator.cpp
+#    ${HOOT_CORE_SRC_PATH}/hoot/core/schema/PythonSchemaTranslator.cpp
+#)
 
+# Remove phonenumber dependencies, we can add this back later.
+#list(REMOVE_ITEM HOOT_CORE_FILES 
+#    ${HOOT_CORE_SRC_PATH}/hoot/core/algorithms/extractors/poi-polygon/PoiPolygonPhoneNumberScoreExtractor.cpp
+#    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/phone/PhoneNumberLocator.cpp
+#    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/phone/PhoneNumberNormalizer.cpp
+#    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/phone/PhoneNumberParser.cpp
+#    ${HOOT_CORE_SRC_PATH}/hoot/core/visitors/NormalizePhoneNumbersVisitor.cpp
+#    ${HOOT_CORE_SRC_PATH}/hoot/core/visitors/PhoneNumberLocateVisitor.cpp
+#)
+
+# AUTOMOC doesn't work, probably due to our naming convention
+set(HOOT_CORE_MOC_PATH 
+    ${HOOT_CORE_SRC_PATH}/hoot/core/io/OgrWriterThread.h
+    ${HOOT_CORE_SRC_PATH}/hoot/core/io/ElementTranslatorThread.h
+)
+qt5_wrap_cpp(HOOT_CORE_MOC_FILES ${HOOT_CORE_MOC_PATH})
 
 add_library(HootCore
     ${HOOT_CORE_FILES}
+    ${HOOT_CORE_MOC_FILES}
     ${HOOT_CORE_SRC_PATH}/hoot/core/info/VersionDefines.h
     ${HOOT_CORE_SRC_PATH}/hoot/core/util/ConfigOptions.h
     ${HOOT_CORE_SRC_PATH}/hoot/core/util/ConfigDefaults.h
     ${PROTO_OUTPUT_FILES}
 )
+
 message(${HOOT_CORE_SRC_PATH})
 target_include_directories(
     HootCore PRIVATE 
@@ -250,7 +352,12 @@ target_precompile_headers(
     HootCore PUBLIC 
     ${HOOT_CORE_SRC_PATH}/hoot/core/HootCoreStable.h
 )
-target_link_libraries(HootCore ${CONAN_LIBS} Tbs Tgs)
+message(${CONAN_LIBS})
+target_link_libraries(
+    HootCore ${CONAN_LIBS}
+    Tbs
+    Tgs
+)
 
 #
 # Hoot JS
@@ -272,6 +379,7 @@ target_include_directories(
     ${HOOT_JS_SRC_PATH}
     ${NODEJS_HEADER_PATH}
     ${V8_HEADER_PATH}
+    ${CONAN_INCLUDE_DIRS}
 )
 target_link_libraries(
     HootJs
@@ -291,19 +399,26 @@ file(GLOB_RECURSE HOOT_CMD_FILES CONFIGURE_DEPENDS
     ${HOOT_CMD_SRC_PATH}/*.cpp
 )
 
-add_executable(HootCmd
+
+add_executable(
+    hoot.bin
     ${HOOT_CMD_FILES}
 )
+# This is required by Qt
+set_property(TARGET hoot.bin PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_compile_options(hoot.bin PRIVATE -fPIC)
 target_include_directories(
-    HootCmd PRIVATE 
+    hoot.bin
+    PRIVATE 
     ${HOOT_CORE_SRC_PATH}
     ${TBS_SRC_PATH}
     ${TGS_SRC_PATH}
     ${HOOT_JS_SRC_PATH}
     ${V8_HEADER_PATH}
+    ${CONAN_INCLUDE_DIRS}
 )
 target_link_libraries(
-    HootCmd 
+    hoot.bin
     HootCore
     Tbs Tgs
     HootJs
@@ -313,3 +428,7 @@ target_link_libraries(
 
 
 install(TARGETS ${installable_libs} DESTINATION lib)
+install(SCRIPT ${HOOT_HOME}/scripts/HootEnv.sh DESTINATION bin)
+install(SCRIPT ${HOOT_HOME}/scripts/RunHoot.sh DESTINATION bin RENAME hoot)
+install(DIRECTORY ${HOOT_HOME}/conf DESTINATION .)
+

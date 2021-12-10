@@ -1,4 +1,6 @@
 
+*.swp
+
 build
 tmp
 cmake-build-release
