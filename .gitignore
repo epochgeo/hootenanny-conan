@@ -2,6 +2,7 @@
 *.swp
 
 build
+package
 tmp
 cmake-build-release
 

@@ -12,6 +12,7 @@ export CCACHE_SLOPPINESS=time_macros
 # Determine the library path for GDAL
 #export GDAL_LIB_DIR=`gdal-config --libs | sed -e "s/-L//g" | sed -e "s/ *-lgdal.*//g"`
 #export GDAL_DATA=`gdal-config --datadir`
+export GDAL_DATA=$HOOT_HOME/gdal
 
 # Use JDK path for JAVA_HOME if present
 if [ -L "/usr/lib/jvm/java-1.8.0" ]; then

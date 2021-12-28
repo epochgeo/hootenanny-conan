@@ -18,10 +18,10 @@ conan remote add sintef https://artifactory.smd.sintef.no/artifactory/api/conan/
 ```
 curl -sL https://rpm.nodesource.com/setup_14.x | sudo bash -
 sudo yum install -y centos-release-scl && sudo yum update -y
-sudo yum install -y git devtoolset-9-gcc devtoolset-9-gcc-c++ libgtk2-devel v8-devel \
-    glpk-devel nodejs-devel gtk2-devel glpk-devel python27-devel re2-devel
-# Start using the gcc 9 tools, you'll have to do this each time you start a new shell
-source /opt/rh/devtoolset-9/enable
+sudo yum install -y git devtoolset-8-gcc devtoolset-8-gcc-c++ libgtk2-devel v8-devel \
+    glpk-devel nodejs-devel gtk2-devel glpk-devel python27-devel re2-devel java-1.8.0-openjdk-devel
+# Start using the gcc 8 tools, you'll have to do this each time you start a new shell
+source /opt/rh/devtoolset-8/enable
 ```
 
 Ugh. Use the install steps for STXXL here:

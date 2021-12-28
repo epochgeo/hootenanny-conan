@@ -27,25 +27,6 @@ class HootenannyConan(ConanFile):
     default_options = {
         "shared": True,
         "fPIC": True,
-        "qt:shared": False,
-        "coinglpk:shared": False,
-        "libphonenumber:shared": False,
-        "qt:with_icu": False,
-        "qt:with_glib": False,
-        "qt:gui": True,
-        "qt:qt3d": False,
-        "qt:opengl": "no",
-        "qt:widgets": False,
-        "qt:with_sqlite3": False,
-        "qt:with_pq": False,
-        "qt:with_mysql": False,
-        "gdal:shared": False,
-        "boost:shared": False,
-        "opencv:shared": False,
-        "openssl:shared": False,
-        "protobuf:shared": False,
-        "libtiff:shared": False,
-        "liboauthcpp:shared": False,
     }
 
     # Sources are located in the same place as this recipe, copy them to the recipe
@@ -54,15 +35,19 @@ class HootenannyConan(ConanFile):
     requires = [
         "boost/1.71.0",
         "coinglpk/[>=4.65]@sintef/stable",
+        "cppunit/1.15.1",
         "gdal/3.2.1",
         "opencv/2.4.13.7",
-        "openssl/1.1.1l",
+        # Using k to be consistent w/ Qt
+        "openssl/1.1.1k",
         "protobuf/3.15.5",
         "qt/5.15.2",
+        "libnode/14.18.2@test/debug",
         # explicity require libtiff to avoid a conflict in gdal/opencv
         "libtiff/4.3.0",
         "liboauthcpp/0.1@test/debug",
         "libphonenumber/[>=8.12.27]@test/debug",
+        "zlib/1.2.11",
     ]
 
     generators = "cmake_find_package", "cmake", "qt"
@@ -103,13 +88,14 @@ class HootenannyConan(ConanFile):
             (f"patches/{self.version}/TgsConfig.h", "/tgs/src/main/cpp/tgs/"),
             (f"patches/{self.version}/VersionDefines.h", "/hoot-core/src/main/cpp/hoot/core/info/"),
             (f"patches/{self.version}/CMakeLists.txt", "/."),
-            (f"patches/{self.version}/HootEnv.sh", "scripts/"),
-            (f"patches/{self.version}/hoot", "scripts/"),
+            (f"patches/{self.version}/HootEnv.sh", "/scripts/"),
+            (f"patches/{self.version}/hoot", "/scripts/"),
         ]
 
         self.run("mkdir -p %s/hoot/build/" % (self.source_folder))
 
         for copy_from, copy_to in copy_me:
+            print(f"copying {copy_from} to {copy_to}")
             self.run("cp -u %s/%s %s/hoot/%s" % (self.recipe_folder, copy_from, 
                 self.source_folder, copy_to))
 
@@ -125,18 +111,33 @@ class HootenannyConan(ConanFile):
         #self.run("make -j`nproc`")
 
     def package(self):
-        #self.run("cmake --install " + self.source_folder)
+        cmake = CMake(self)
+        cmake.parallel = 8
+        cmake.configure()
+        cmake.install()
         self.copy("*", dst="bin", src="hoot/bin/")
         self.copy("*", dst="conf", src="hoot/conf/")
         self.copy("*", dst="rules", src="hoot/rules/")
+        self.copy("*", dst="docs", src="hoot/docs/")
+        self.copy("*", dst="gdal", src="hoot/gdal/")
         self.copy("HootEnv.sh", dst="bin", src="hoot/scripts/")
         self.copy("RunHoot.sh", dst="bin", src="hoot/scripts/")
         self.copy("*.h", dst="include", src="hoot/hoot-core/src/main/cpp/")
+        self.copy("*.h", dst="include", src="hoot/hoot-core-test/src/test/cpp/")
+        self.copy("*.h", dst="include", src="hoot/hoot-test/src/main/cpp/")
+        self.copy("*.h", dst="include", src="hoot/hoot-js/src/main/cpp/")
+        self.copy("*.h", dst="include", src="hoot/tgs/src/main/cpp/")
+        self.copy("*.h", dst="include", src="hoot/tbs/src/main/cpp/")
+        self.copy("*.hh", dst="include", src="hoot/hoot-core/src/main/cpp/")
+        self.copy("*.hh", dst="include", src="hoot/tgs/src/main/cpp/")
+        self.copy("*.hh", dst="include", src="hoot/tbs/src/main/cpp/")
         self.copy("*.lib", dst="lib", keep_path=False)
         self.copy("*.dll", dst="bin", keep_path=False)
         self.copy("*.dylib*", dst="lib", keep_path=False)
         self.copy("*.so", dst="lib", keep_path=False)
         self.copy("*.a", dst="lib", keep_path=False)
+        self.copy("proj.db", dst=".", keep_path=False)
+        self.copy("ToyTest*.osm", dst="res/test-files", src="hoot/test-files/")
 
     def package_info(self):
         self.cpp_info.libs = ["HootCore"]

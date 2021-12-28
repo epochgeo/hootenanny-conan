@@ -1,5 +1,40 @@
+diff --git a/conf/hoot.json b/conf/hoot.json
+index 97b5f77..c1d42b1 100644
+--- a/conf/hoot.json
++++ b/conf/hoot.json
+@@ -1,5 +1,7 @@
+ {
+   "#": "Use this file for temporary testing of configuration option changes. Make permanent changes ",
+   "#": "in conf/ConfigOptions.asciidoc",
+-  "#" : "end"
++  "#" : "end",
++  "#" : "this avoids an unexpected segfault during conflation. Weird.",
++  "unify.enable.optimal.constrained.matches": "false"
+ }
+diff --git a/hoot-core/src/main/cpp/hoot/core/Hoot.cpp b/hoot-core/src/main/cpp/hoot/core/Hoot.cpp
+index b36b359..1bc036a 100644
+--- a/hoot-core/src/main/cpp/hoot/core/Hoot.cpp
++++ b/hoot-core/src/main/cpp/hoot/core/Hoot.cpp
+@@ -43,6 +43,7 @@
+ 
+ // Qt
+ #include <QLibrary>
++#include <QtPlugin>
+ #include <QNetworkSession>
+ 
+ // System
+@@ -54,6 +55,9 @@
+ # include <tgs/BigContainers/Stxxl.h>
+ #endif
+ 
++// let Qt know that we're using a statically linked plugin
++Q_IMPORT_PLUGIN(QSQLiteDriverPlugin)
++
+ using namespace std;
+ 
+ namespace hoot
 diff --git a/hoot-core/src/main/cpp/hoot/core/algorithms/rubber-sheet/RubberSheet.cpp b/hoot-core/src/main/cpp/hoot/core/algorithms/rubber-sheet/RubberSheet.cpp
-index 0f2b35b1e..270a494a4 100644
+index 0f2b35b..270a494 100644
 --- a/hoot-core/src/main/cpp/hoot/core/algorithms/rubber-sheet/RubberSheet.cpp
 +++ b/hoot-core/src/main/cpp/hoot/core/algorithms/rubber-sheet/RubberSheet.cpp
 @@ -53,6 +53,7 @@
@@ -11,7 +46,7 @@ index 0f2b35b1e..270a494a4 100644
  
  using namespace geos::geom;
 diff --git a/hoot-core/src/main/cpp/hoot/core/algorithms/splitter/OsmMapSplitter.cpp b/hoot-core/src/main/cpp/hoot/core/algorithms/splitter/OsmMapSplitter.cpp
-index d353cd734..69dca21c6 100644
+index ebea0ed..f7ad06d 100644
 --- a/hoot-core/src/main/cpp/hoot/core/algorithms/splitter/OsmMapSplitter.cpp
 +++ b/hoot-core/src/main/cpp/hoot/core/algorithms/splitter/OsmMapSplitter.cpp
 @@ -35,6 +35,7 @@
@@ -23,7 +58,7 @@ index d353cd734..69dca21c6 100644
  
  using geos::geom::Envelope;
 diff --git a/hoot-core/src/main/cpp/hoot/core/cmd/VersionCmd.cpp b/hoot-core/src/main/cpp/hoot/core/cmd/VersionCmd.cpp
-index 2cb628efd..91d13927d 100644
+index 2cb628e..91d13927 100644
 --- a/hoot-core/src/main/cpp/hoot/core/cmd/VersionCmd.cpp
 +++ b/hoot-core/src/main/cpp/hoot/core/cmd/VersionCmd.cpp
 @@ -53,17 +53,19 @@
@@ -61,8 +96,64 @@ index 2cb628efd..91d13927d 100644
      LOG_DEBUG("Protobuf Version:\t" << QString("%1.%2.%3")
                .arg(GOOGLE_PROTOBUF_VERSION / 1000000)
                .arg(GOOGLE_PROTOBUF_VERSION / 1000 % 1000)
+diff --git a/hoot-core/src/main/cpp/hoot/core/conflate/AbstractConflator.cpp b/hoot-core/src/main/cpp/hoot/core/conflate/AbstractConflator.cpp
+index c6074a2..e3b0344 100644
+--- a/hoot-core/src/main/cpp/hoot/core/conflate/AbstractConflator.cpp
++++ b/hoot-core/src/main/cpp/hoot/core/conflate/AbstractConflator.cpp
+@@ -183,17 +183,24 @@ MatchSetVector AbstractConflator::_optimizeMatches(std::vector<ConstMatchPtr>& m
+   LOG_VARD(matches.size());
+   LOG_VARD(oneToManyMatches.size());
+ 
++LOG_VARD(_map->validate());
+   OptimalConstrainedMatches cm(_map);
++LOG_VARD(_map->validate());
+   std::vector<ConstMatchPtr> cmMatches;
+ 
+   if (ConfigOptions().getUnifyEnableOptimalConstrainedMatches())
+   {
++LOG_VARD(_map->validate());
+     cm.addMatches(matches.begin(), matches.end());
++LOG_VARD(_map->validate());
+     cm.setTimeLimit(ConfigOptions().getUnifyOptimizerTimeLimit());
++LOG_VARD(_map->validate());
+     double cmStart = Tgs::Time::getTime();
+     try
+     {
++LOG_VARD(_map->validate());
+       cmMatches = cm.calculateSubset();
++LOG_VARD(_map->validate());
+     }
+     catch (const Tgs::Exception& exp)
+     {
+@@ -205,6 +212,7 @@ MatchSetVector AbstractConflator::_optimizeMatches(std::vector<ConstMatchPtr>& m
+     LOG_DEBUG(Tgs::SystemInfo::getCurrentProcessMemoryUsageString());
+   }
+ 
++LOG_VARD(_map->validate());
+   GreedyConstrainedMatches gm(_map);
+   gm.addMatches(matches.begin(), matches.end());
+   double gmStart = Tgs::Time::getTime();
+diff --git a/hoot-core/src/main/cpp/hoot/core/conflate/matching/OptionsValidator.cpp b/hoot-core/src/main/cpp/hoot/core/conflate/matching/OptionsValidator.cpp
+index 7f85545..96dcb09 100644
+--- a/hoot-core/src/main/cpp/hoot/core/conflate/matching/OptionsValidator.cpp
++++ b/hoot-core/src/main/cpp/hoot/core/conflate/matching/OptionsValidator.cpp
+@@ -122,6 +122,14 @@ void OptionsValidator::fixMisc()
+     {
+       fixedMergerCreators.append(PoiPolygonMergerCreator::className());
+     }
++    // if we don't recognize the matcher, assume the merger is in the right spot
++    else
++    {
++      QString mergerCreator = mergerCreators.at(i);
++      LOG_DEBUG("Unrecognized matcher " << matchCreator <<
++        " assuming it matches " << mergerCreator << " and leaving the merger unchanged.");
++      fixedMergerCreators.append(mergerCreator);
++    }
+   }
+   mergerCreators = fixedMergerCreators;
+ 
 diff --git a/hoot-core/src/main/cpp/hoot/core/elements/OsmMap.cpp b/hoot-core/src/main/cpp/hoot/core/elements/OsmMap.cpp
-index bc199827c..f8edee967 100644
+index bc19982..f8edee9 100644
 --- a/hoot-core/src/main/cpp/hoot/core/elements/OsmMap.cpp
 +++ b/hoot-core/src/main/cpp/hoot/core/elements/OsmMap.cpp
 @@ -52,6 +52,7 @@
@@ -73,8 +164,20 @@ index bc199827c..f8edee967 100644
  
  using namespace std;
  
+diff --git a/hoot-core/src/main/cpp/hoot/core/io/OgrUtilities.cpp b/hoot-core/src/main/cpp/hoot/core/io/OgrUtilities.cpp
+index b129614..02e502d 100644
+--- a/hoot-core/src/main/cpp/hoot/core/io/OgrUtilities.cpp
++++ b/hoot-core/src/main/cpp/hoot/core/io/OgrUtilities.cpp
+@@ -101,6 +101,7 @@ OgrUtilities::~OgrUtilities()
+   OGRCleanupAll();
+   LOG_TRACE("Destroying driver manager...");
+   GDALDestroyDriverManager();
++  LOG_TRACE("Destroyed.");
+ }
+ 
+ OgrUtilities& OgrUtilities::getInstance()
 diff --git a/hoot-core/src/main/cpp/hoot/core/language/ToEnglishDictionaryTranslator.cpp b/hoot-core/src/main/cpp/hoot/core/language/ToEnglishDictionaryTranslator.cpp
-index a18ede433..869fdd126 100644
+index a18ede4..869fdd1 100644
 --- a/hoot-core/src/main/cpp/hoot/core/language/ToEnglishDictionaryTranslator.cpp
 +++ b/hoot-core/src/main/cpp/hoot/core/language/ToEnglishDictionaryTranslator.cpp
 @@ -41,6 +41,8 @@ using namespace std;
@@ -97,7 +200,7 @@ index a18ede433..869fdd126 100644
    UnicodeString str((UChar*)input.constData(), input.size());
  
 diff --git a/hoot-core/src/main/cpp/hoot/core/language/ToEnglishDictionaryTranslator.h b/hoot-core/src/main/cpp/hoot/core/language/ToEnglishDictionaryTranslator.h
-index 4f8e9e9e4..95c1453ac 100644
+index 4f8e9e9..95c1453 100644
 --- a/hoot-core/src/main/cpp/hoot/core/language/ToEnglishDictionaryTranslator.h
 +++ b/hoot-core/src/main/cpp/hoot/core/language/ToEnglishDictionaryTranslator.h
 @@ -40,6 +40,9 @@
@@ -120,7 +223,7 @@ index 4f8e9e9e4..95c1453ac 100644
  
  }
 diff --git a/hoot-core/src/main/cpp/hoot/core/language/ToEnglishTranslateDictionary.cpp b/hoot-core/src/main/cpp/hoot/core/language/ToEnglishTranslateDictionary.cpp
-index 4de5dea87..c76230814 100644
+index 4de5dea..c762308 100644
 --- a/hoot-core/src/main/cpp/hoot/core/language/ToEnglishTranslateDictionary.cpp
 +++ b/hoot-core/src/main/cpp/hoot/core/language/ToEnglishTranslateDictionary.cpp
 @@ -57,7 +57,7 @@ _transliterationCachingEnabled(false)
@@ -142,7 +245,7 @@ index 4de5dea87..c76230814 100644
    {
      LOG_ERROR("transliterator error code: " << error);
 diff --git a/hoot-core/src/main/cpp/hoot/core/language/ToEnglishTranslateDictionary.h b/hoot-core/src/main/cpp/hoot/core/language/ToEnglishTranslateDictionary.h
-index 0fc7a8390..213296a4b 100644
+index 0fc7a83..213296a 100644
 --- a/hoot-core/src/main/cpp/hoot/core/language/ToEnglishTranslateDictionary.h
 +++ b/hoot-core/src/main/cpp/hoot/core/language/ToEnglishTranslateDictionary.h
 @@ -40,6 +40,8 @@
@@ -176,8 +279,58 @@ index 0fc7a8390..213296a4b 100644
    bool _transliterationCachingEnabled;
  
    ToEnglishTranslateDictionary();
+diff --git a/hoot-core/src/main/cpp/hoot/core/schema/OsmSchema.h b/hoot-core/src/main/cpp/hoot/core/schema/OsmSchema.h
+index 23cd2f6..ba51244 100644
+--- a/hoot-core/src/main/cpp/hoot/core/schema/OsmSchema.h
++++ b/hoot-core/src/main/cpp/hoot/core/schema/OsmSchema.h
+@@ -437,7 +437,7 @@ public:
+   /**
+    * Returns true if this is a reversed unidirectional way. (E.g. oneway=reverse)
+    */
+-  bool isReversed(const Element& e) const;
++  //bool isReversed(const Element& e) const;
+   /**
+    * Return true if this tag can contain free-form text.
+    */
+diff --git a/scripts/HootEnv.sh b/scripts/HootEnv.sh
+index a0037c6..3768585 100755
+--- a/scripts/HootEnv.sh
++++ b/scripts/HootEnv.sh
+@@ -10,17 +10,21 @@ export HOOT_WORKING_NAME=`echo $HOOT_HOME | sed -e "s/.*\///g"`
+ export CCACHE_SLOPPINESS=time_macros
+ 
+ # Determine the library path for GDAL
+-export GDAL_LIB_DIR=`gdal-config --libs | sed -e "s/-L//g" | sed -e "s/ *-lgdal.*//g"`
+-export GDAL_DATA=`gdal-config --datadir`
+-
+-# Use JDK path for JAVA_HOME if present
+-if [ -L "/usr/lib/jvm/java-1.8.0" ]; then
+-  export JAVA_HOME="/usr/lib/jvm/java-1.8.0"
+-  export LD_LIBRARY_PATH=$GDAL_LIB_DIR:$JAVA_HOME/jre/lib/amd64/server:$HOOT_HOME/lib:$LD_LIBRARY_PATH
+-else # Assume there is just a 'jre' path
+-  export JAVA_HOME="/usr/lib/jvm/jre-1.8.0"
+-  export LD_LIBRARY_PATH=$GDAL_LIB_DIR:$JAVA_HOME/lib/amd64/server:$HOOT_HOME/lib:$LD_LIBRARY_PATH
+-fi
++#export GDAL_LIB_DIR=`gdal-config --libs | sed -e "s/-L//g" | sed -e "s/ *-lgdal.*//g"`
++#export GDAL_DATA=`gdal-config --datadir`
++unset GDAL_LIB_DIR
++export GDAL_DATA=$HOOT_HOME/gdal
++export PROJ_LIB=$HOOT_HOME
++
++# No need for JDK w/ Python
++## Use JDK path for JAVA_HOME if present
++#if [ -L "/usr/lib/jvm/java-1.8.0" ]; then
++#  export JAVA_HOME="/usr/lib/jvm/java-1.8.0"
++#  export LD_LIBRARY_PATH=$GDAL_LIB_DIR:$JAVA_HOME/jre/lib/amd64/server:$HOOT_HOME/lib:$LD_LIBRARY_PATH
++#else # Assume there is just a 'jre' path
++#  export JAVA_HOME="/usr/lib/jvm/jre-1.8.0"
++#  export LD_LIBRARY_PATH=$GDAL_LIB_DIR:$JAVA_HOME/lib/amd64/server:$HOOT_HOME/lib:$LD_LIBRARY_PATH
++#fi
+ 
+ export PATH=$HOOT_HOME/bin/:$PATH
+ export QT_SELECT=5
 diff --git a/scripts/core/CreateConfigCode.py b/scripts/core/CreateConfigCode.py
-index e5e35cf61..95b945747 100755
+index e5e35cf..95b9457 100755
 --- a/scripts/core/CreateConfigCode.py
 +++ b/scripts/core/CreateConfigCode.py
 @@ -12,14 +12,16 @@ import textwrap
