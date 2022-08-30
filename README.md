@@ -25,7 +25,7 @@ source /opt/rh/devtoolset-8/enable
 ```
 
 Ugh. Use the install steps for STXXL here:
-https://github.com/ngageoint/hootenanny/blob/master/scripts/util/Centos7_only_core.sh#L194
+https://github.com/ngageoint/hootenanny/blob/v0.2.71/scripts/util/Centos7_only_core.sh#L196
 
 
 ## Development Flow
