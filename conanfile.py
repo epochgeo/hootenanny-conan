@@ -36,11 +36,14 @@ class HootenannyConan(ConanFile):
         "boost/1.71.0",
         "coinglpk/[>=4.65]@sintef/stable",
         "cppunit/1.15.1",
+        "sqlite3/3.39.2",
+        "libiconv/1.16",
         "gdal/3.2.1",
         "opencv/2.4.13.7",
         # Using k to be consistent w/ Qt
         "openssl/1.1.1k",
         "protobuf/3.15.5",
+        "icu/71.1",
         "qt/5.15.2",
         "libnode/14.18.2@test/debug",
         # explicity require libtiff to avoid a conflict in gdal/opencv
