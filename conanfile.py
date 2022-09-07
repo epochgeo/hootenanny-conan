@@ -33,6 +33,12 @@ class HootenannyConan(ConanFile):
     exports_sources = "CMakeLists.txt", "hoot/*"
 
     requires = [
+        # added to appease qt
+        "sqlite3/3.36.0",
+        # need to match version used by libphonenumber
+        "icu/69.1",
+        # added to appease gdal
+        "libiconv/1.16",
         "boost/1.71.0",
         "coinglpk/[>=4.65]@sintef/stable",
         "cppunit/1.15.1",
