@@ -66,6 +66,7 @@ class HootenannyConan(ConanFile):
 
     def source(self):
         self.run("git clone https://github.com/ngageoint/hootenanny hoot")
+        self.run("cd hoot; git checkout v0.2.64; cd ..")
         #self.run("cd %s/hoot; git apply %s/hoot.diff" % (self.source_folder, self.recipe_folder))
         #self.run("cd hoot; git apply ../hoot.diff")
         #patch("hoot.diff")
