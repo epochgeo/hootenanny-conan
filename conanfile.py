@@ -86,7 +86,7 @@ class HootenannyConan(ConanFile):
 
         # Apply Patches
         for it in self.conan_data.get("patches", {}).get(self.version, []):
-           self.run("echo here; pwd; cd %s/hoot; git apply %s/%s; cd .." % 
+            self.run("pwd; cd %s/hoot; git apply %s/%s; cd .." % 
                 (self.source_folder, self.recipe_folder, it["patch_file"]))
 
         # Copy extra files

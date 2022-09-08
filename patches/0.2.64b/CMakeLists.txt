@@ -340,14 +340,13 @@ list(REMOVE_ITEM HOOT_CORE_FILES
 )
 
 # Remove libpostal dependencies, we can add this back later.
-#list(REMOVE_ITEM HOOT_CORE_FILES 
-#    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/address/LegacyVertexMatcher.cpp
-#    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/address/LibPostalInit.cpp
-#    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/address/AddressParser.cpp
-#    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/address/AddressNormalizer.cpp
-#    ${HOOT_CORE_SRC_PATH}/hoot/core/language/ToEnglishAddressTranslator.cpp
-#    ${HOOT_CORE_SRC_PATH}/hoot/core/schema/PythonSchemaTranslator.cpp
-#)
+list(REMOVE_ITEM HOOT_CORE_FILES
+    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/address/LibPostalInit.cpp
+    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/address/AddressParser.cpp
+    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/address/AddressNormalizer.cpp
+    ${HOOT_CORE_SRC_PATH}/hoot/core/language/ToEnglishAddressTranslator.cpp
+    ${HOOT_CORE_SRC_PATH}/hoot/core/schema/PythonSchemaTranslator.cpp
+)
 
 # Remove phonenumber dependencies, we can add this back later.
 #list(REMOVE_ITEM HOOT_CORE_FILES 
