@@ -11,10 +11,7 @@ compiler=gcc
 compiler.version=8
 compiler.libcxx=libstdc++
 build_type=Release
-#build_type=Debug
-
 [options]
-
 boost:shared=False
 coinglpk:shared=False
 icu:shared=False
@@ -39,7 +36,7 @@ qt:opengl=no
 qt:widgets=False
 qt:shared=False
 qt:with_icu=False
-qt:with_evdev=False
+#qt:with_evdev=False
 # Causes compiler error
 #"qt:with_freetype": False,
 #"qt:with_fontconfig": False,
@@ -56,22 +53,23 @@ qt:with_sqlite3=True
 qt:with_pq=False
 qt:with_mysql=False
 
-qt:with_direct2d=no
-qt:with_directfb=no
-qt:with_eglfs=no
-qt:with_gbm=no
-qt:with_kms=no
-qt:with_linuxfb=no
-qt:with_xcb=no
-qt:with_xkbcommon=False
+#qt:with_direct2d=no
+#qt:with_directfb=no
+#qt:with_eglfs=no
+#qt:with_gbm=no
+#qt:with_kms=no
+#qt:with_linuxfb=no
+#qt:with_xcb=no
+#qt:with_xkbcommon=False
 
 openssl:shared=False
 libtiff:shared=False
 liboauthcpp:shared=False
 xkbcommon:shared=False
 zlib:shared=False
-
 [build_requires]
-
 [env]
-
+#CXXFLAGS="-Wno-error"
+[conf]
+#tools.system.package_manager:mode=install
+#tools.build:cxxflags=["-Wno-error"]
