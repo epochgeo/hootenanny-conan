@@ -41,7 +41,7 @@ set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DQT_CORE_LIB")
 #link_directories(${libphonenumber_LIB_DIRS})
 
 find_library(STXXL_LIBRARIES stxxl REQUIRED)
-find_library(libpostal_LIBRARIES postal REQUIRED)
+#find_library(libpostal_LIBRARIES postal REQUIRED)
 find_package(JNI REQUIRED)
 
 set(
@@ -50,7 +50,7 @@ set(
     ${GDAL_LIBRARIES}
     ${GLPK_LIBRARIES}
     ${liboauthcpp_LIBRARIES}
-    ${libpostal_LIBRARIES}
+    #${libpostal_LIBRARIES}
     ${opencv_LIBRARIES}
     ${OpenSSL_LIBRARIES}
     ${protobuf_LIBRARIES}
