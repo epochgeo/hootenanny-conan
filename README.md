@@ -1,38 +1,6 @@
 
 # Install
 
-## JRS January 2022
-
-### Ubuntu 20.04
-
-```
-sudo apt install valac-bin valac-0.48-vapi
-```
-
-### CentOS 7
-
-Add external conan deps:
-
-```
-conan remote add sintef https://artifactory.smd.sintef.no/artifactory/api/conan/conan-local
-```
-
-```
-curl -sL https://rpm.nodesource.com/setup_14.x | sudo bash -
-sudo yum install -y centos-release-scl && sudo yum update -y
-sudo yum install -y git devtoolset-8-gcc devtoolset-8-gcc-c++ libgtk2-devel v8-devel \
-    glpk-devel nodejs-devel gtk2-devel glpk-devel python27-devel re2-devel java-1.8.0-openjdk-devel
-# Start using the gcc 8 tools, you'll have to do this each time you start a new shell
-source /opt/rh/devtoolset-8/enable
-```
-
-Ugh. Use the install steps for STXXL here:
-https://github.com/ngageoint/hootenanny/blob/master/scripts/util/Centos7_only_core.sh#L194
-
-### Development Flow
-
-https://docs.conan.io/en/latest/developing_packages/package_dev_flow.html
-
 ## BDW 9/7/22
 
 Launch CentOS 7 VM and login:
@@ -57,14 +25,9 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-Hoot
 Install deps:
 ```
 sudo yum install -y centos-release-scl && sudo yum update -y
-# need epel for gtest required by later version of cmake installed later on
 sudo yum -y install epel-release
 curl -sL https://rpm.nodesource.com/setup_14.x | sudo bash -
-# These cause problems when v8-devel is installed.
-#sudo yum remove nodejs nodejs-devel
-sudo yum install -y git devtoolset-8-gcc devtoolset-8-gcc-c++ v8-devel glpk-devel gtk2-devel re2-devel java-1.8.0-openjdk-devel bzip2-devel readline-devel ncurses-devel sqlite-devel gdbm-devel db4-devel libpcap-devel xz-devel wget gtest dnf htop libpostal stxxl nano
-# Now add them back.
-#sudo yum install -y nodejs nodejs-devel
+sudo yum install -y git devtoolset-8-gcc devtoolset-8-gcc-c++ v8-devel glpk-devel gtk2-devel re2-devel java-1.8.0-openjdk-devel bzip2-devel readline-devel ncurses-devel sqlite-devel gdbm-devel db4-devel libpcap-devel xz-devel wget gtest gtest-devel dnf htop libpostal libpostal-devel stxxl stxxl-devel nano
 sudo yum groupinstall -y "Development tools"
 sudo dnf install -y libfontenc-devel libXaw-devel libXdmcp-devel libXtst-devel libxkbfile-devel libXres-devel libXScrnSaver-devel libXvMC-devel xorg-x11-xtrans-devel xcb-util-wm-devel xcb-util-image-devel xcb-util-keysyms-devel xcb-util-renderutil-devel libXv-devel xcb-util-devel xkeyboard-config-devel
 # Start using the gcc 8 tools, YOU'LL HAVE TO DO THIS EACH TIME YOU START A NEW SHELL
@@ -93,6 +56,17 @@ chmod 600 ~/.ssh/id_ed25519.pub
 ssh-add ~/.ssh/id_ed25519.pub
 # Now add the public key contents to your github accounts.
 cat ~/.ssh/id_ed25519.pub
+```
+
+How I like to configure git:
+```
+git config --global user.name "My Name"
+git config --global user.email my@email.com
+git config --global core.autocrlf input
+git config --global branch.autosetuprebase always
+git config --global branch.master.rebase true
+git config --global core.editor nano
+git config --global color.ui true
 ```
 
 JNI:
@@ -127,7 +101,7 @@ Install Conan:
 pip install conan
 ```
 
-Install hoot conan and deps:
+Install hoot conan and custom built deps:
 ```
 cd ~
 
@@ -162,3 +136,7 @@ make
 cd build/hoot
 bin/hoot.bin version
 ```
+
+## Development Flow
+
+https://docs.conan.io/en/latest/developing_packages/package_dev_flow.html
