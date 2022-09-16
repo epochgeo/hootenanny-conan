@@ -70,6 +70,7 @@ set(
     ${protobuf_INCLUDE_DIRS}
     ${Qt5_INCLUDE_DIRS}
     ${libphonenumber_INCLUDE_DIRS}
+    
 )
 
 #
@@ -157,9 +158,8 @@ list(REMOVE_ITEM CONAN_LIBS
 set(EXTRA_LIBS
     libphonenumber.a
     libgeocoding.a
-    # Provided by libnode
-#    node
-     libnode.a
+    # link to node as a shared lib
+#   node
     libv8_compiler.a
     libv8_base_without_compiler.a
     libv8_init.a
@@ -185,6 +185,7 @@ set(EXTRA_LIBS
     libicui18n.a
     libicudata.a
     libtorque_base.a
+    
 )
 
 list(REMOVE_ITEM CONAN_LIBS ${EXTRA_LIBS})
@@ -197,6 +198,7 @@ set(
     ${GDAL_INCLUDE_DIRS}
     ${GLPK_INCLUDE_DIRS}
     ${liboauthcpp_INCLUDE_DIRS}
+    
 )
 
 set(HOOT_HOME ${PROJECT_SOURCE_DIR})
@@ -385,6 +387,7 @@ target_include_directories(
     ${TGS_SRC_PATH}
     ${HOOT_JS_SRC_PATH}
     ${V8_HEADER_PATH}
+        
 )
 target_precompile_headers(
     HootCore PUBLIC 
@@ -420,6 +423,7 @@ target_include_directories(
     ${NODEJS_HEADER_PATH}
     ${V8_HEADER_PATH}
     ${CONAN_INCLUDE_DIRS}
+    
 )
 target_link_libraries(
     HootJs
@@ -474,6 +478,7 @@ set(HOOT_TEST_INCLUDES
     ${V8_HEADER_PATH}
     ${JNI_INCLUDE_DIRS}
     ${CONAN_INCLUDE_DIRS}
+    
 ) 
 
 add_library(
@@ -489,6 +494,7 @@ target_include_directories(
     HootTestLib
     PUBLIC
     ${HOOT_TEST_INCLUDES}
+    
 )
 target_link_libraries(
     HootTestLib
@@ -514,6 +520,7 @@ target_include_directories(
     HootTest
     PUBLIC
     ${HOOT_TEST_INCLUDES}
+    
 )
 target_link_libraries(
     HootTest
@@ -553,6 +560,7 @@ target_include_directories(
     ${HOOT_JS_SRC_PATH}
     ${V8_HEADER_PATH}
     ${CONAN_INCLUDE_DIRS}
+    
 )
 target_link_libraries(
     hoot.bin
