@@ -124,16 +124,17 @@ cd liboauthcpp-conan
 make
 cd ..
 
-cd conan-libnode
+cd conan-libphonenumber
 make
 cd ..
 
-cd conan-libphonenumber
+cd conan-libnode
 make
 cd ..
 
 cd hootenanny-conan
 make
+export HOOT_HOME=build/hoot/
 cd build/hoot
 bin/hoot.bin version
 ```
