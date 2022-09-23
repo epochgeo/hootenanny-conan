@@ -27,7 +27,7 @@ Install deps:
 sudo yum install -y centos-release-scl && sudo yum update -y
 sudo yum -y install epel-release
 curl -sL https://rpm.nodesource.com/setup_14.x | sudo bash -
-sudo yum install -y git devtoolset-8-gcc devtoolset-8-gcc-c++ v8-devel glpk-devel gtk2-devel re2-devel java-1.8.0-openjdk-devel bzip2-devel readline-devel ncurses-devel sqlite-devel gdbm-devel db4-devel libpcap-devel xz-devel wget gtest gtest-devel dnf htop libpostal libpostal-devel stxxl stxxl-devel nano mlocate
+sudo yum install -y git devtoolset-8-gcc devtoolset-8-gcc-c++ v8-devel glpk-devel gtk2-devel re2-devel java-1.8.0-openjdk-devel bzip2-devel readline-devel ncurses-devel sqlite-devel gdbm-devel db4-devel libpcap-devel xz-devel wget gtest gtest-devel dnf htop libpostal libpostal-devel stxxl stxxl-devel nano mlocate libffi-devel
 sudo yum groupinstall -y "Development tools"
 sudo dnf install -y libfontenc-devel libXaw-devel libXdmcp-devel libXtst-devel libxkbfile-devel libXres-devel libXScrnSaver-devel libXvMC-devel xorg-x11-xtrans-devel xcb-util-wm-devel xcb-util-image-devel xcb-util-keysyms-devel xcb-util-renderutil-devel libXv-devel xcb-util-devel xkeyboard-config-devel
 sudo updatedb
@@ -76,6 +76,7 @@ find / -name jni_md.h 2> /dev/null
 # TODO: make this permanent
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.342.b07-1.el7_9.x86_64/include/linux/
 ```
+Set up Python env:
 
 Get pyenv:
 ```
@@ -89,12 +90,20 @@ export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init --path)"
 ```
 
-Set up Python env:
+Install py:
 ```
+# Instructions here are for 3.7, which is what using transvec with TDP requires. If 
+# you're not using TDP, then >= 3.6 will suffice.
 source ~/.bash_profile
-pyenv install 3.6.8
-pyenv global 3.6.8
+PYTHON_CONFIGURE_OPTS="--enable-shared --with-pic" pyenv install --force 3.7.14
+pyenv global 3.7.14
 pyenv versions
+```
+
+Upgrade some packages:
+```
+pip install --upgrade pip
+pip install --upgrade setuptools
 ```
 
 Install Conan:
