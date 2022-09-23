@@ -27,7 +27,8 @@ Install deps:
 sudo yum install -y centos-release-scl && sudo yum update -y
 sudo yum -y install epel-release
 curl -sL https://rpm.nodesource.com/setup_14.x | sudo bash -
-sudo yum install -y git devtoolset-8-gcc devtoolset-8-gcc-c++ v8-devel glpk-devel gtk2-devel re2-devel java-1.8.0-openjdk-devel bzip2-devel readline-devel ncurses-devel sqlite-devel gdbm-devel db4-devel libpcap-devel xz-devel wget gtest gtest-devel dnf htop libpostal libpostal-devel stxxl stxxl-devel nano mlocate libffi-devel
+# Add an upgrade version of git for pydoc-markdown with endpoint-repo.
+sudo yum install -y git devtoolset-8-gcc devtoolset-8-gcc-c++ v8-devel glpk-devel gtk2-devel re2-devel java-1.8.0-openjdk-devel bzip2-devel readline-devel ncurses-devel sqlite-devel gdbm-devel db4-devel libpcap-devel xz-devel wget gtest gtest-devel dnf htop libpostal libpostal-devel stxxl stxxl-devel nano mlocate libffi-devel pandoc texlive-latex-bin-bin texlive-*.noarch https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm
 sudo yum groupinstall -y "Development tools"
 sudo dnf install -y libfontenc-devel libXaw-devel libXdmcp-devel libXtst-devel libxkbfile-devel libXres-devel libXScrnSaver-devel libXvMC-devel xorg-x11-xtrans-devel xcb-util-wm-devel xcb-util-image-devel xcb-util-keysyms-devel xcb-util-renderutil-devel libXv-devel xcb-util-devel xkeyboard-config-devel
 sudo updatedb
