@@ -1,12 +1,12 @@
 
 # Install
 
-## BDW 9/7/22
+## BDW 9/22/22
 
 Launch CentOS 7 VM and login:
 ```
-cd
 vagrant plugin install vagrant-bindfs
+cd pyhoot
 vagrant up (had to disable nfs in Vagrantfile)
 vagrant ssh
 ```
