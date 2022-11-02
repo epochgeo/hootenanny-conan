@@ -1,3 +1,36 @@
+diff --git a/conf/core/ConfigOptions.asciidoc b/conf/core/ConfigOptions.asciidoc
+index d808da0..a9cfd00 100644
+--- a/conf/core/ConfigOptions.asciidoc
++++ b/conf/core/ConfigOptions.asciidoc
+@@ -3229,6 +3229,28 @@ Determines whether `NameCriterion` allows partial name matching against the `nam
+ input. Partial matching is very basic, where the input name string must be contained within the
+ feature name in order to match.
+ 
++=== name.extractor.ignore.case.sensitive
++
++* Data Type: bool
++* Default Value: `false`
++
++TODO
++
++=== name.extractor.ignore.tokens
++
++* Data Type: list
++* Default Value: ``
++
++TODO
++
++=== name.extractor.ignore.split.tokens
++
++* Data Type: list
++* Default Value:
++** `\\s+`
++
++TODO
++
+ === network.conflicts.aggression
+ 
+ * Data Type: double
 diff --git a/conf/hoot.json b/conf/hoot.json
 index 97b5f77..c1d42b1 100644
 --- a/conf/hoot.json
@@ -33,6 +66,113 @@ index b36b359..1bc036a 100644
  using namespace std;
  
  namespace hoot
+diff --git a/hoot-core/src/main/cpp/hoot/core/algorithms/extractors/NameExtractor.cpp b/hoot-core/src/main/cpp/hoot/core/algorithms/extractors/NameExtractor.cpp
+index e0c2587..657d968 100644
+--- a/hoot-core/src/main/cpp/hoot/core/algorithms/extractors/NameExtractor.cpp
++++ b/hoot-core/src/main/cpp/hoot/core/algorithms/extractors/NameExtractor.cpp
+@@ -27,6 +27,7 @@
+ #include "NameExtractor.h"
+ 
+ // hoot
++#include <hoot/core/util/StringUtils.h>
+ #include <hoot/core/util/Factory.h>
+ #include <hoot/core/algorithms/string/LevenshteinDistance.h>
+ 
+@@ -40,15 +41,30 @@ HOOT_FACTORY_REGISTER(FeatureExtractor, NameExtractor)
+ NameExtractor::NameExtractor() :
+ _d(std::make_shared<LevenshteinDistance>()),
+ _namesProcessed(0),
+-_matchAttemptMade(false)
++_matchAttemptMade(false),
++_ignoreTokens(ConfigOptions().getNameExtractorIgnoreTokens()),
++_ignoreSplitTokens(ConfigOptions().getNameExtractorIgnoreSplitTokens())
+ {
++  _initIgnoreConfig();
+ }
+ 
+ NameExtractor::NameExtractor(StringDistancePtr d) :
+ _d(d),
+ _namesProcessed(0),
+-_matchAttemptMade(false)
++_matchAttemptMade(false),
++_ignoreTokens(ConfigOptions().getNameExtractorIgnoreTokens()),
++_ignoreSplitTokens(ConfigOptions().getNameExtractorIgnoreSplitTokens())
+ {
++  _initIgnoreConfig();
++}
++
++void NameExtractor::_initIgnoreConfig()
++{
++  _ignoreCaseSensitivity = Qt::CaseInsensitive;
++  if (ConfigOptions().getNameExtractorIgnoreCaseSensitive())
++  {
++    _ignoreCaseSensitivity = Qt::CaseSensitive;
++  }
+ }
+ 
+ double NameExtractor::extract(const OsmMap& /*map*/, const std::shared_ptr<const Element>& target,
+@@ -72,11 +88,21 @@ double NameExtractor::extract(const ConstElementPtr& target, const ConstElementP
+ 
+   for (int i = 0; i < targetNames.size(); i++)
+   {
+-    const QString targetName = targetNames[i];
++    QString targetName = targetNames[i];
++    if (!_ignoreTokens.isEmpty())
++    {
++      StringUtils::splitAndRemoveAll(targetName, _ignoreTokens, _ignoreSplitTokens, _ignoreCaseSensitivity);
++    }
++
+     for (int j = 0; j < candidateNames.size(); j++)
+     {
+       _matchAttemptMade = true;
+-      const QString candidateName = candidateNames[j];
++      QString candidateName = candidateNames[j];
++      if (!_ignoreTokens.isEmpty())
++      {
++        StringUtils::splitAndRemoveAll(candidateName, _ignoreTokens, _ignoreSplitTokens, _ignoreCaseSensitivity);
++      }
++
+       LOG_VART(targetName);
+       LOG_VART(candidateName);
+       const double thisScore = _d->compare(targetName, candidateName);
+diff --git a/hoot-core/src/main/cpp/hoot/core/algorithms/extractors/NameExtractor.h b/hoot-core/src/main/cpp/hoot/core/algorithms/extractors/NameExtractor.h
+index 60206e1..f514109 100644
+--- a/hoot-core/src/main/cpp/hoot/core/algorithms/extractors/NameExtractor.h
++++ b/hoot-core/src/main/cpp/hoot/core/algorithms/extractors/NameExtractor.h
+@@ -33,6 +33,10 @@
+ #include <hoot/core/elements/Element.h>
+ #include <hoot/core/elements/OsmMap.h>
+ 
++// Qt
++#include <QStringList>
++#include <QRegExp>
++
+ namespace hoot
+ {
+ 
+@@ -51,7 +55,12 @@ public:
+     const std::shared_ptr<const Element>& candidate) const override;
+   virtual double extract(const ConstElementPtr& target, const ConstElementPtr& candidate) const;
+ 
++  void _initIgnoreConfig();
++
+   void setStringDistance(const StringDistancePtr &sd) override { _d = sd; }
++  void setIgnoreTokens(const QStringList& list) { _ignoreTokens = list; }
++  void setIgnoreSplitTokens(const QStringList& tokens) { _ignoreSplitTokens = tokens; }
++  void setIgnoreCaseSensitivity(Qt::CaseSensitivity sensitivity) { _ignoreCaseSensitivity = sensitivity; }
+ 
+   QString getDescription() const override { return "Calculates name similarity between features"; }
+   QString getClassName() const override { return className(); }
+@@ -65,6 +74,9 @@ private:
+   StringDistancePtr _d;
+   mutable long _namesProcessed;
+   mutable bool _matchAttemptMade;
++  QStringList _ignoreTokens;
++  QStringList _ignoreSplitTokens;
++  Qt::CaseSensitivity _ignoreCaseSensitivity;
+ };
+ 
+ }
 diff --git a/hoot-core/src/main/cpp/hoot/core/algorithms/rubber-sheet/RubberSheet.cpp b/hoot-core/src/main/cpp/hoot/core/algorithms/rubber-sheet/RubberSheet.cpp
 index 0f2b35b..270a494 100644
 --- a/hoot-core/src/main/cpp/hoot/core/algorithms/rubber-sheet/RubberSheet.cpp
@@ -46,7 +186,7 @@ index 0f2b35b..270a494 100644
  
  using namespace geos::geom;
 diff --git a/hoot-core/src/main/cpp/hoot/core/algorithms/splitter/OsmMapSplitter.cpp b/hoot-core/src/main/cpp/hoot/core/algorithms/splitter/OsmMapSplitter.cpp
-index ebea0ed..f7ad06d 100644
+index d353cd7..69dca21 100644
 --- a/hoot-core/src/main/cpp/hoot/core/algorithms/splitter/OsmMapSplitter.cpp
 +++ b/hoot-core/src/main/cpp/hoot/core/algorithms/splitter/OsmMapSplitter.cpp
 @@ -35,6 +35,7 @@
@@ -58,7 +198,7 @@ index ebea0ed..f7ad06d 100644
  
  using geos::geom::Envelope;
 diff --git a/hoot-core/src/main/cpp/hoot/core/cmd/VersionCmd.cpp b/hoot-core/src/main/cpp/hoot/core/cmd/VersionCmd.cpp
-index 2cb628e..91d13927 100644
+index 2cb628e..91d1392 100644
 --- a/hoot-core/src/main/cpp/hoot/core/cmd/VersionCmd.cpp
 +++ b/hoot-core/src/main/cpp/hoot/core/cmd/VersionCmd.cpp
 @@ -53,17 +53,19 @@
@@ -165,7 +305,7 @@ index bc19982..f8edee9 100644
  using namespace std;
  
 diff --git a/hoot-core/src/main/cpp/hoot/core/io/OgrUtilities.cpp b/hoot-core/src/main/cpp/hoot/core/io/OgrUtilities.cpp
-index b129614..02e502d 100644
+index d8c88c4..edda431 100644
 --- a/hoot-core/src/main/cpp/hoot/core/io/OgrUtilities.cpp
 +++ b/hoot-core/src/main/cpp/hoot/core/io/OgrUtilities.cpp
 @@ -101,6 +101,7 @@ OgrUtilities::~OgrUtilities()
@@ -292,6 +432,69 @@ index 23cd2f6..ba51244 100644
    /**
     * Return true if this tag can contain free-form text.
     */
+diff --git a/hoot-core/src/main/cpp/hoot/core/util/StringUtils.cpp b/hoot-core/src/main/cpp/hoot/core/util/StringUtils.cpp
+index fcc3ea7..5c61057 100644
+--- a/hoot-core/src/main/cpp/hoot/core/util/StringUtils.cpp
++++ b/hoot-core/src/main/cpp/hoot/core/util/StringUtils.cpp
+@@ -241,6 +241,35 @@ void StringUtils::removeAll(QStringList& input, const QStringList& toRemove)
+   }
+ }
+ 
++void StringUtils::removeAll2(QStringList& input, const QStringList& toRemove, Qt::CaseSensitivity caseSensitivity)
++{
++  QStringList output;
++  for (int i = 0; i < input.size(); i++)
++  {
++    QString inputStr = input.at(i);
++    for (int j = 0; j < toRemove.size(); j++)
++    {
++      inputStr = inputStr.remove(toRemove.at(j), caseSensitivity);
++    }
++    output.append(inputStr);
++  }
++  input = output;
++}
++
++void StringUtils::splitAndRemoveAll(QString& input, const QStringList& toRemove, const QStringList& tokenList, 
++                                    Qt::CaseSensitivity caseSensitivity)
++{
++  QString output;
++  for (int i = 0; i < tokenList.size(); i++)
++  {
++    QStringList inputParts =
++      input.split(tokenList.at(i), QString::SkipEmptyParts, caseSensitivity);
++    removeAll2(inputParts, toRemove, caseSensitivity);
++    output = inputParts.join(tokenList.at(i));
++  }
++  input = output;
++}
++
+ void StringUtils::removeAllContaining(
+   QStringList& input, const QString& text, Qt::CaseSensitivity caseSensitivity)
+ {
+diff --git a/hoot-core/src/main/cpp/hoot/core/util/StringUtils.h b/hoot-core/src/main/cpp/hoot/core/util/StringUtils.h
+index fd7f976..90586d9 100644
+--- a/hoot-core/src/main/cpp/hoot/core/util/StringUtils.h
++++ b/hoot-core/src/main/cpp/hoot/core/util/StringUtils.h
+@@ -233,6 +233,8 @@ public:
+    * @param toRemove the list of string to remove
+    */
+   static void removeAll(QStringList& input, const QStringList& toRemove);
++  // TODO: replace removeAll w/ this?
++  static void removeAll2(QStringList& input, const QStringList& toRemove, Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive);
+   /**
+    * @brief removeAllContaining Removes all strings from a list containing a particular text
+    * @param input the list to remove strings from
+@@ -242,6 +244,9 @@ public:
+   static void removeAllContaining(
+     QStringList& input, const QString& text,
+     Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive);
++  // TODO
++  static void splitAndRemoveAll(QString& input, const QStringList& toRemove, const QStringList& tokenList, 
++                                Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive);
+   /**
+    * Removes the last occurrence of a group of strings from a single string
+    *
 diff --git a/scripts/HootEnv.sh b/scripts/HootEnv.sh
 index a0037c6..3768585 100755
 --- a/scripts/HootEnv.sh
