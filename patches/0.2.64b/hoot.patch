@@ -433,59 +433,50 @@ index 23cd2f6..ba51244 100644
     * Return true if this tag can contain free-form text.
     */
 diff --git a/hoot-core/src/main/cpp/hoot/core/util/StringUtils.cpp b/hoot-core/src/main/cpp/hoot/core/util/StringUtils.cpp
-index fcc3ea7..5c61057 100644
+index fcc3ea7..ae2e728 100644
 --- a/hoot-core/src/main/cpp/hoot/core/util/StringUtils.cpp
 +++ b/hoot-core/src/main/cpp/hoot/core/util/StringUtils.cpp
 @@ -241,6 +241,35 @@ void StringUtils::removeAll(QStringList& input, const QStringList& toRemove)
    }
  }
  
-+void StringUtils::removeAll2(QStringList& input, const QStringList& toRemove, Qt::CaseSensitivity caseSensitivity)
-+{
-+  QStringList output;
-+  for (int i = 0; i < input.size(); i++)
-+  {
-+    QString inputStr = input.at(i);
-+    for (int j = 0; j < toRemove.size(); j++)
-+    {
-+      inputStr = inputStr.remove(toRemove.at(j), caseSensitivity);
-+    }
-+    output.append(inputStr);
-+  }
-+  input = output;
-+}
-+
 +void StringUtils::splitAndRemoveAll(QString& input, const QStringList& toRemove, const QStringList& tokenList, 
 +                                    Qt::CaseSensitivity caseSensitivity)
 +{
-+  QString output;
-+  for (int i = 0; i < tokenList.size(); i++)
++  for (int i = 0; i < toRemove.size(); i++)
 +  {
-+    QStringList inputParts =
-+      input.split(tokenList.at(i), QString::SkipEmptyParts, caseSensitivity);
-+    removeAll2(inputParts, toRemove, caseSensitivity);
-+    output = inputParts.join(tokenList.at(i));
++    const QString toRemoveStr = toRemove.at(i);
++    if (input.contains(toRemoveStr, caseSensitivity))
++    {
++      for (int j = 0; j < tokenList.size(); j++)
++      {
++        const QString token  = tokenList.at(j);
++        if (input.contains(token, caseSensitivity))
++        {
++          const QStringList inputParts =
++            input.split(token, QString::SkipEmptyParts, caseSensitivity);
++          QStringList outputParts;
++          for (int k = 0; k < inputParts.size(); k++)
++          {
++            QString inputStr = inputParts.at(k);
++            inputStr = inputStr.remove(toRemoveStr, caseSensitivity);
++            outputParts.append(inputStr);
++          }
++          input = outputParts.join(token);
++        }
++      }
++    }
 +  }
-+  input = output;
 +}
 +
  void StringUtils::removeAllContaining(
    QStringList& input, const QString& text, Qt::CaseSensitivity caseSensitivity)
  {
 diff --git a/hoot-core/src/main/cpp/hoot/core/util/StringUtils.h b/hoot-core/src/main/cpp/hoot/core/util/StringUtils.h
-index fd7f976..90586d9 100644
+index fd7f976..4bccde7 100644
 --- a/hoot-core/src/main/cpp/hoot/core/util/StringUtils.h
 +++ b/hoot-core/src/main/cpp/hoot/core/util/StringUtils.h
-@@ -233,6 +233,8 @@ public:
-    * @param toRemove the list of string to remove
-    */
-   static void removeAll(QStringList& input, const QStringList& toRemove);
-+  // TODO: replace removeAll w/ this?
-+  static void removeAll2(QStringList& input, const QStringList& toRemove, Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive);
-   /**
-    * @brief removeAllContaining Removes all strings from a list containing a particular text
-    * @param input the list to remove strings from
-@@ -242,6 +244,9 @@ public:
+@@ -242,6 +242,9 @@ public:
    static void removeAllContaining(
      QStringList& input, const QString& text,
      Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive);
