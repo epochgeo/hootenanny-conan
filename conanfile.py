@@ -1,10 +1,8 @@
 from pprint import pprint
 
 from conans import ConanFile, CMake
-#from conan.tools.cmake import CMakeToolchain, CMake
 from conan.tools.files import patch, apply_conandata_patches, rename
 from conan.tools.layout import cmake_layout
-
 
 class HootenannyConan(ConanFile):
     name = "hootenanny"
@@ -57,14 +55,9 @@ class HootenannyConan(ConanFile):
     ]
 
     generators = "cmake_find_package", "cmake", "qt"
-    #generators = "cmake"
-    # scm = {
-    #     "type": "git",
-    #     "url": "https://github.com/ngageoint/hootenanny",
-    #     "subfolder": "hoot"
-    # }
 
     def source(self):
+        print("Cloning hoot repo...")
         self.run("git clone --depth 1 -b v0.2.64 https://github.com/ngageoint/hootenanny hoot")
         #self.run("cd %s/hoot; git apply %s/hoot.diff" % (self.source_folder, self.recipe_folder))
         #self.run("cd hoot; git apply ../hoot.diff")
@@ -74,21 +67,16 @@ class HootenannyConan(ConanFile):
         if self.settings.os == "Windows":
             del self.options.fPIC
 
-    # def layout(self):
-    #     cmake_layout(self)
-
-    #def generate(self):
-    #    tc = CMakeToolchain(self)
-    #    tc.generate()
-
     def build(self):
 
         # Apply Patches
+        print("applying patches..")
         for it in self.conan_data.get("patches", {}).get(self.version, []):
             self.run("pwd; cd %s/hoot; git apply %s/%s; cd .." % 
                 (self.source_folder, self.recipe_folder, it["patch_file"]))
 
         # Copy extra files
+        print("Copying extra hoot files...")
         copy_me = [
             (f"patches/{self.version}/HootConfig.h", "/hoot-core/src/main/cpp/hoot/core/"),
             (f"patches/{self.version}/TgsConfig.h", "/tgs/src/main/cpp/tgs/"),
@@ -105,16 +93,11 @@ class HootenannyConan(ConanFile):
             self.run("cp -u %s/%s %s/hoot/%s" % (self.recipe_folder, copy_from, 
                 self.source_folder, copy_to))
 
-        #self.run(f"cp {self.build_folder}/conanbuildinfo.cmake {self.source_folder}/hoot/")
-
+        print("Building hoot code...")
         cmake = CMake(self)
-        cmake.parallel = 8
+        cmake.parallel = 31
         cmake.configure()
         cmake.build()
-        #self.run(f"cd {self.build_folder}; cmake {self.source_folder}")
-        #self.run(f"cd {self.build_folder}; make -j`nproc`")
-        #self.run("cmake . --build")
-        #self.run("make -j`nproc`")
 
     def package(self):
         cmake = CMake(self)
