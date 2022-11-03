@@ -432,6 +432,30 @@ index 23cd2f6..ba51244 100644
    /**
     * Return true if this tag can contain free-form text.
     */
+diff --git a/hoot-core/src/main/cpp/hoot/core/scoring/MatchComparator.cpp b/hoot-core/src/main/cpp/hoot/core/scoring/MatchComparator.cpp
+index 446ec2f..c7ab18e 100644
+--- a/hoot-core/src/main/cpp/hoot/core/scoring/MatchComparator.cpp
++++ b/hoot-core/src/main/cpp/hoot/core/scoring/MatchComparator.cpp
+@@ -537,8 +537,17 @@ void MatchComparator::_findActualMatches(const ConstOsmMapPtr& in, const ConstOs
+       }
+       else
+       {
+-        LOG_TRACE("Missing UUID: " << cList[i]);
+-        throw HootException("Conflated uuid was not found in either input: " + cList[i]);
++        // Changed this to not throw an exception in order to keep a scoring run from crashing. 
++        // This may lead to score inaccuracies.
++        if (logWarnCount < Log::getWarnMessageLimit())
++        {
++          LOG_WARN("Missing UUID: " << cList[i]);
++        }
++        else if (logWarnCount == Log::getWarnMessageLimit())
++        {
++          LOG_WARN(className() << ": " << Log::LOG_WARN_LIMIT_REACHED_MESSAGE);
++        }
++        logWarnCount++;
+       }
+     }
+     // create a match between all the combinations of ref1 uuid to ref2 uuid
 diff --git a/hoot-core/src/main/cpp/hoot/core/util/StringUtils.cpp b/hoot-core/src/main/cpp/hoot/core/util/StringUtils.cpp
 index fcc3ea7..ae2e728 100644
 --- a/hoot-core/src/main/cpp/hoot/core/util/StringUtils.cpp
