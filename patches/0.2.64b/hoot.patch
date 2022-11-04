@@ -1,30 +1,37 @@
 diff --git a/conf/core/ConfigOptions.asciidoc b/conf/core/ConfigOptions.asciidoc
-index d808da0..a9cfd00 100644
+index d808da0..e6e0e07 100644
 --- a/conf/core/ConfigOptions.asciidoc
 +++ b/conf/core/ConfigOptions.asciidoc
-@@ -3229,6 +3229,28 @@ Determines whether `NameCriterion` allows partial name matching against the `nam
+@@ -3229,6 +3229,35 @@ Determines whether `NameCriterion` allows partial name matching against the `nam
  input. Partial matching is very basic, where the input name string must be contained within the
  feature name in order to match.
  
-+=== name.extractor.ignore.case.sensitive
++=== name.extractor.remove.case.sensitive
 +
 +* Data Type: bool
 +* Default Value: `false`
 +
 +TODO
 +
-+=== name.extractor.ignore.tokens
++=== name.extractor.remove.tokens
 +
 +* Data Type: list
 +* Default Value: ``
 +
 +TODO
 +
-+=== name.extractor.ignore.split.tokens
++=== name.extractor.remove.split.tokens
 +
 +* Data Type: list
 +* Default Value:
 +** `\\s+`
++
++TODO
++
++=== name.extractor.remove.if.name.contains.val.tag.key
++
++* Data Type: string
++* Default Value: ``
 +
 +TODO
 +
@@ -67,7 +74,7 @@ index b36b359..1bc036a 100644
  
  namespace hoot
 diff --git a/hoot-core/src/main/cpp/hoot/core/algorithms/extractors/NameExtractor.cpp b/hoot-core/src/main/cpp/hoot/core/algorithms/extractors/NameExtractor.cpp
-index e0c2587..657d968 100644
+index e0c2587..01fbf07 100644
 --- a/hoot-core/src/main/cpp/hoot/core/algorithms/extractors/NameExtractor.cpp
 +++ b/hoot-core/src/main/cpp/hoot/core/algorithms/extractors/NameExtractor.cpp
 @@ -27,6 +27,7 @@
@@ -78,16 +85,17 @@ index e0c2587..657d968 100644
  #include <hoot/core/util/Factory.h>
  #include <hoot/core/algorithms/string/LevenshteinDistance.h>
  
-@@ -40,15 +41,30 @@ HOOT_FACTORY_REGISTER(FeatureExtractor, NameExtractor)
+@@ -40,15 +41,32 @@ HOOT_FACTORY_REGISTER(FeatureExtractor, NameExtractor)
  NameExtractor::NameExtractor() :
  _d(std::make_shared<LevenshteinDistance>()),
  _namesProcessed(0),
 -_matchAttemptMade(false)
 +_matchAttemptMade(false),
-+_ignoreTokens(ConfigOptions().getNameExtractorIgnoreTokens()),
-+_ignoreSplitTokens(ConfigOptions().getNameExtractorIgnoreSplitTokens())
++_removeTokens(ConfigOptions().getNameExtractorRemoveTokens()),
++_removeSplitTokens(ConfigOptions().getNameExtractorRemoveSplitTokens()),
++_removeIfNameContainsValTagKey(ConfigOptions().getNameExtractorRemoveIfNameContainsValTagKey())
  {
-+  _initIgnoreConfig();
++  _initRemoveConfig();
  }
  
  NameExtractor::NameExtractor(StringDistancePtr d) :
@@ -95,31 +103,93 @@ index e0c2587..657d968 100644
  _namesProcessed(0),
 -_matchAttemptMade(false)
 +_matchAttemptMade(false),
-+_ignoreTokens(ConfigOptions().getNameExtractorIgnoreTokens()),
-+_ignoreSplitTokens(ConfigOptions().getNameExtractorIgnoreSplitTokens())
++_removeTokens(ConfigOptions().getNameExtractorRemoveTokens()),
++_removeSplitTokens(ConfigOptions().getNameExtractorRemoveSplitTokens()),
++_removeIfNameContainsValTagKey(ConfigOptions().getNameExtractorRemoveIfNameContainsValTagKey())
  {
-+  _initIgnoreConfig();
++  _initRemoveConfig();
 +}
 +
-+void NameExtractor::_initIgnoreConfig()
++void NameExtractor::_initRemoveConfig()
 +{
-+  _ignoreCaseSensitivity = Qt::CaseInsensitive;
-+  if (ConfigOptions().getNameExtractorIgnoreCaseSensitive())
++  _removeCaseSensitivity = Qt::CaseInsensitive;
++  if (ConfigOptions().getNameExtractorRemoveCaseSensitive())
 +  {
-+    _ignoreCaseSensitivity = Qt::CaseSensitive;
++    _removeCaseSensitivity = Qt::CaseSensitive;
 +  }
  }
  
  double NameExtractor::extract(const OsmMap& /*map*/, const std::shared_ptr<const Element>& target,
-@@ -72,11 +88,21 @@ double NameExtractor::extract(const ConstElementPtr& target, const ConstElementP
+@@ -57,6 +75,44 @@ double NameExtractor::extract(const OsmMap& /*map*/, const std::shared_ptr<const
+   return extract(target, candidate);
+ }
+ 
++void NameExtractor::_parseTagRemoveTokens(const ConstElementPtr& element) const
++{
++  if (element->hasTag(_removeIfNameContainsValTagKey))
++  {
++    QString tagVal = element->getTag(_removeIfNameContainsValTagKey);
++    QStringList tagValParts = tagVal.split(QRegExp("\\s+"));
++    QString firstTagVal = tagValParts[0].trimmed();
++    QStringList separators;
++    separators.append(";");
++    separators.append(",");
++    for (int i = 0; i < separators.size(); i++)
++    {
++      QString separator = separators[i];
++      if (firstTagVal.contains(separator))
++      {
++        QStringList firstTagValParts = firstTagVal.split(separator);
++        for (int i = 0; i < firstTagValParts.size(); i++)
++        {
++          const QString firstTagValPart = firstTagValParts[i].trimmed();
++          if (!firstTagValPart.isEmpty() && !_removeTokens.contains(firstTagValParts[i]) && 
++              firstTagValParts[i].compare("unknown", Qt::CaseInsensitive) != 0)
++          {
++            _removeTokens.append(firstTagValParts[i]);
++          }
++        }
++      }
++      else
++      {
++        if (!_removeTokens.contains(firstTagVal) && 
++             firstTagVal.compare("unknown", Qt::CaseInsensitive) != 0)
++        {
++          _removeTokens.append(firstTagVal);
++        }
++      }
++    }
++  }
++}
++
+ double NameExtractor::extract(const ConstElementPtr& target, const ConstElementPtr& candidate) const
+ {
+   QStringList targetNames, candidateNames;
+@@ -68,15 +124,40 @@ double NameExtractor::extract(const ConstElementPtr& target, const ConstElementP
+   candidateNames.append(candidate->getTags().getPseudoNames());
+   _namesProcessed += candidateNames.size();
+ 
++  // TODO: this is probably too specific for here and should be rolled into an inheriting class
++  if (!_removeIfNameContainsValTagKey.isEmpty())
++  {
++    _parseTagRemoveTokens(target);
++    _parseTagRemoveTokens(candidate);
++  }
++  LOG_VART(_removeTokens);
++  LOG_VART(_removeSplitTokens);
++
+   double score = -1;
  
    for (int i = 0; i < targetNames.size(); i++)
    {
 -    const QString targetName = targetNames[i];
 +    QString targetName = targetNames[i];
-+    if (!_ignoreTokens.isEmpty())
++    LOG_VART(targetName);
++    if (!_removeTokens.isEmpty())
 +    {
-+      StringUtils::splitAndRemoveAll(targetName, _ignoreTokens, _ignoreSplitTokens, _ignoreCaseSensitivity);
++      StringUtils::splitAndRemoveAll(
++        targetName, _removeTokens, _removeSplitTokens, _removeCaseSensitivity);
++      //StringUtils::removeLastIndexOf(targetName, _removeTokens, _removeCaseSensitivity);
 +    }
 +
      for (int j = 0; j < candidateNames.size(); j++)
@@ -127,49 +197,44 @@ index e0c2587..657d968 100644
        _matchAttemptMade = true;
 -      const QString candidateName = candidateNames[j];
 +      QString candidateName = candidateNames[j];
-+      if (!_ignoreTokens.isEmpty())
++      LOG_VART(candidateName);
++      if (!_removeTokens.isEmpty())
 +      {
-+        StringUtils::splitAndRemoveAll(candidateName, _ignoreTokens, _ignoreSplitTokens, _ignoreCaseSensitivity);
++        StringUtils::splitAndRemoveAll(
++          candidateName, _removeTokens, _removeSplitTokens, _removeCaseSensitivity);
++        //StringUtils::removeLastIndexOf(candidateName, _removeTokens, _removeCaseSensitivity);
 +      }
 +
        LOG_VART(targetName);
        LOG_VART(candidateName);
        const double thisScore = _d->compare(targetName, candidateName);
 diff --git a/hoot-core/src/main/cpp/hoot/core/algorithms/extractors/NameExtractor.h b/hoot-core/src/main/cpp/hoot/core/algorithms/extractors/NameExtractor.h
-index 60206e1..f514109 100644
+index 60206e1..126e21f 100644
 --- a/hoot-core/src/main/cpp/hoot/core/algorithms/extractors/NameExtractor.h
 +++ b/hoot-core/src/main/cpp/hoot/core/algorithms/extractors/NameExtractor.h
-@@ -33,6 +33,10 @@
+@@ -33,6 +33,11 @@
  #include <hoot/core/elements/Element.h>
  #include <hoot/core/elements/OsmMap.h>
  
 +// Qt
 +#include <QStringList>
++#include <QSet>
 +#include <QRegExp>
 +
  namespace hoot
  {
  
-@@ -51,7 +55,12 @@ public:
-     const std::shared_ptr<const Element>& candidate) const override;
-   virtual double extract(const ConstElementPtr& target, const ConstElementPtr& candidate) const;
- 
-+  void _initIgnoreConfig();
-+
-   void setStringDistance(const StringDistancePtr &sd) override { _d = sd; }
-+  void setIgnoreTokens(const QStringList& list) { _ignoreTokens = list; }
-+  void setIgnoreSplitTokens(const QStringList& tokens) { _ignoreSplitTokens = tokens; }
-+  void setIgnoreCaseSensitivity(Qt::CaseSensitivity sensitivity) { _ignoreCaseSensitivity = sensitivity; }
- 
-   QString getDescription() const override { return "Calculates name similarity between features"; }
-   QString getClassName() const override { return className(); }
-@@ -65,6 +74,9 @@ private:
+@@ -65,6 +70,13 @@ private:
    StringDistancePtr _d;
    mutable long _namesProcessed;
    mutable bool _matchAttemptMade;
-+  QStringList _ignoreTokens;
-+  QStringList _ignoreSplitTokens;
-+  Qt::CaseSensitivity _ignoreCaseSensitivity;
++  mutable QStringList _removeTokens;
++  QStringList _removeSplitTokens;
++  QString _removeIfNameContainsValTagKey;
++  Qt::CaseSensitivity _removeCaseSensitivity;
++
++  void _initRemoveConfig();
++  void _parseTagRemoveTokens(const ConstElementPtr& element) const;
  };
  
  }
@@ -457,36 +522,55 @@ index 446ec2f..c7ab18e 100644
      }
      // create a match between all the combinations of ref1 uuid to ref2 uuid
 diff --git a/hoot-core/src/main/cpp/hoot/core/util/StringUtils.cpp b/hoot-core/src/main/cpp/hoot/core/util/StringUtils.cpp
-index fcc3ea7..ae2e728 100644
+index fcc3ea7..996cdc0 100644
 --- a/hoot-core/src/main/cpp/hoot/core/util/StringUtils.cpp
 +++ b/hoot-core/src/main/cpp/hoot/core/util/StringUtils.cpp
-@@ -241,6 +241,35 @@ void StringUtils::removeAll(QStringList& input, const QStringList& toRemove)
+@@ -241,6 +241,54 @@ void StringUtils::removeAll(QStringList& input, const QStringList& toRemove)
    }
  }
  
-+void StringUtils::splitAndRemoveAll(QString& input, const QStringList& toRemove, const QStringList& tokenList, 
-+                                    Qt::CaseSensitivity caseSensitivity)
++void StringUtils::splitAndRemoveAll(
++  QString& input, const QStringList& toRemove, const QStringList& tokenList, 
++  Qt::CaseSensitivity caseSensitivity)
 +{
 +  for (int i = 0; i < toRemove.size(); i++)
 +  {
 +    const QString toRemoveStr = toRemove.at(i);
++    LOG_VART(toRemoveStr);
 +    if (input.contains(toRemoveStr, caseSensitivity))
 +    {
 +      for (int j = 0; j < tokenList.size(); j++)
 +      {
 +        const QString token  = tokenList.at(j);
++        if (token.compare(toRemoveStr, Qt::CaseInsensitive) == 0)
++        {
++          continue;
++        }
++        LOG_VART(token);
 +        if (input.contains(token, caseSensitivity))
 +        {
 +          const QStringList inputParts =
 +            input.split(token, QString::SkipEmptyParts, caseSensitivity);
++          LOG_VART(inputParts);
 +          QStringList outputParts;
 +          for (int k = 0; k < inputParts.size(); k++)
 +          {
 +            QString inputStr = inputParts.at(k);
++            LOG_VART(inputStr);
 +            inputStr = inputStr.remove(toRemoveStr, caseSensitivity);
++            LOG_VART(inputStr);
 +            outputParts.append(inputStr);
 +          }
-+          input = outputParts.join(token);
++          LOG_VART(outputParts);
++          if (outputParts.size() > 1)
++          {
++            input = outputParts.join(token);
++          }
++          else
++          {
++            input = outputParts[0].trimmed();
++          }
++          LOG_VART(input);
 +        }
 +      }
 +    }
