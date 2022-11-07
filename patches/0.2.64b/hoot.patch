@@ -74,7 +74,7 @@ index b36b359..1bc036a 100644
  
  namespace hoot
 diff --git a/hoot-core/src/main/cpp/hoot/core/algorithms/extractors/NameExtractor.cpp b/hoot-core/src/main/cpp/hoot/core/algorithms/extractors/NameExtractor.cpp
-index e0c2587..01fbf07 100644
+index e0c2587..f152816 100644
 --- a/hoot-core/src/main/cpp/hoot/core/algorithms/extractors/NameExtractor.cpp
 +++ b/hoot-core/src/main/cpp/hoot/core/algorithms/extractors/NameExtractor.cpp
 @@ -27,6 +27,7 @@
@@ -165,7 +165,7 @@ index e0c2587..01fbf07 100644
  double NameExtractor::extract(const ConstElementPtr& target, const ConstElementPtr& candidate) const
  {
    QStringList targetNames, candidateNames;
-@@ -68,15 +124,40 @@ double NameExtractor::extract(const ConstElementPtr& target, const ConstElementP
+@@ -68,15 +124,42 @@ double NameExtractor::extract(const ConstElementPtr& target, const ConstElementP
    candidateNames.append(candidate->getTags().getPseudoNames());
    _namesProcessed += candidateNames.size();
  
@@ -187,9 +187,10 @@ index e0c2587..01fbf07 100644
 +    LOG_VART(targetName);
 +    if (!_removeTokens.isEmpty())
 +    {
-+      StringUtils::splitAndRemoveAll(
-+        targetName, _removeTokens, _removeSplitTokens, _removeCaseSensitivity);
++      //StringUtils::splitAndRemoveAll(
++        //targetName, _removeTokens, _removeSplitTokens, _removeCaseSensitivity);
 +      //StringUtils::removeLastIndexOf(targetName, _removeTokens, _removeCaseSensitivity);
++      StringUtils::removeAll2(targetName, _removeTokens, _removeCaseSensitivity);
 +    }
 +
      for (int j = 0; j < candidateNames.size(); j++)
@@ -200,9 +201,10 @@ index e0c2587..01fbf07 100644
 +      LOG_VART(candidateName);
 +      if (!_removeTokens.isEmpty())
 +      {
-+        StringUtils::splitAndRemoveAll(
-+          candidateName, _removeTokens, _removeSplitTokens, _removeCaseSensitivity);
++        //StringUtils::splitAndRemoveAll(
++          //candidateName, _removeTokens, _removeSplitTokens, _removeCaseSensitivity);
 +        //StringUtils::removeLastIndexOf(candidateName, _removeTokens, _removeCaseSensitivity);
++        StringUtils::removeAll2(candidateName, _removeTokens, _removeCaseSensitivity);
 +      }
 +
        LOG_VART(targetName);
@@ -522,10 +524,10 @@ index 446ec2f..c7ab18e 100644
      }
      // create a match between all the combinations of ref1 uuid to ref2 uuid
 diff --git a/hoot-core/src/main/cpp/hoot/core/util/StringUtils.cpp b/hoot-core/src/main/cpp/hoot/core/util/StringUtils.cpp
-index fcc3ea7..996cdc0 100644
+index fcc3ea7..0480c84 100644
 --- a/hoot-core/src/main/cpp/hoot/core/util/StringUtils.cpp
 +++ b/hoot-core/src/main/cpp/hoot/core/util/StringUtils.cpp
-@@ -241,6 +241,54 @@ void StringUtils::removeAll(QStringList& input, const QStringList& toRemove)
+@@ -241,6 +241,63 @@ void StringUtils::removeAll(QStringList& input, const QStringList& toRemove)
    }
  }
  
@@ -577,14 +579,33 @@ index fcc3ea7..996cdc0 100644
 +  }
 +}
 +
++void StringUtils::removeAll2(QString& name, const QStringList& toRemove, 
++                             Qt::CaseSensitivity caseSensitivity)
++{
++  for (int i = 0; i < toRemove.size(); i++)
++  {
++    name.remove(toRemove.at(i), caseSensitivity);
++  }
++}
++
  void StringUtils::removeAllContaining(
    QStringList& input, const QString& text, Qt::CaseSensitivity caseSensitivity)
  {
 diff --git a/hoot-core/src/main/cpp/hoot/core/util/StringUtils.h b/hoot-core/src/main/cpp/hoot/core/util/StringUtils.h
-index fd7f976..4bccde7 100644
+index fd7f976..f95aed8 100644
 --- a/hoot-core/src/main/cpp/hoot/core/util/StringUtils.h
 +++ b/hoot-core/src/main/cpp/hoot/core/util/StringUtils.h
-@@ -242,6 +242,9 @@ public:
+@@ -233,6 +233,9 @@ public:
+    * @param toRemove the list of string to remove
+    */
+   static void removeAll(QStringList& input, const QStringList& toRemove);
++  // TODO:
++  static void removeAll2(QString& name, const QStringList& toRemove, 
++                         Qt::CaseSensitivity caseSensitivity);
+   /**
+    * @brief removeAllContaining Removes all strings from a list containing a particular text
+    * @param input the list to remove strings from
+@@ -242,6 +245,9 @@ public:
    static void removeAllContaining(
      QStringList& input, const QString& text,
      Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive);
