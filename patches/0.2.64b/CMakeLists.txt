@@ -16,29 +16,6 @@ set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -w")
 
 # This define is required for the precompiled headers to work properly
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DQT_CORE_LIB")
-#set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DVALIDATE_ON")
-#set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -O0")
-
-#set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
-
-#find_package(Boost)
-#include_directories(${Boost_INCLUDE_DIRS})
-#find_package(GDAL)
-#include_directories(${GDAL_INCLUDE_DIRS})
-#find_package(coinglpk MODULE REQUIRED)
-#find_package(liboauthcpp)
-#include_directories(${liboauthcpp_INCLUDE_DIRS})
-#find_package(OpenCV)
-#include_directories(${opencv_INCLUDE_DIRS})
-#find_package(OpenSSL)
-#include_directories(${OpenSSL_INCLUDE_DIRS})
-#find_package(Protobuf)
-#include_directories(${protobuf_INCLUDE_DIRS})
-#find_package(Qt5)
-#include_directories(${Qt5_INCLUDE_DIRS})
-#find_package(libphonenumber REQUIRED)
-#include_directories(${libphonenumber_INCLUDE_DIRS})
-#link_directories(${libphonenumber_LIB_DIRS})
 
 find_library(STXXL_LIBRARIES stxxl REQUIRED)
 find_library(libpostal_LIBRARIES postal REQUIRED)
@@ -73,63 +50,8 @@ set(
     
 )
 
-#
-# v8
-#
-#find_path(V8_HEADER_PATH 
-#    libplatform/libplatform.h
-#    PATHS /usr/include/node/ /usr/include/nodejs/deps/v8/include/
-#    REQUIRED
-#)
-#find_library(V8_LIBS
-#    v8
-#    HINTS /usr/lib/x86_64-linux-gnu/ /usr/lib64
-#    REQUIRED
-#)
-#message(${V8_LIBS})
-
-#
-# node.js
-#
-#set(NODEJS_SEARCH_PATHS 
-#    /usr/include/nodejs /usr/include/node /usr/include/nodejs/deps/uv/include)
-#find_path(HOOT_HAVE_NODEJS_SRC_NODE_H 
-#    NAMES nodejs/src/node.h
-#    HINTS ${NODEJS_SEARCH_PATHS}
-#)
-#if (EXISTS ${HOOT_HAVE_NODEJS_SRC_NODE_H})
-#    add_compile_definitions(HOOT_HAVE_NODEJS_SRC_NODE_H)
-#endif()
-#
-#find_path(HOOT_HAVE_NODEJS_NODE_H 
-#    NAMES nodejs/node.h
-#    HINTS ${NODEJS_SEARCH_PATHS}
-#)
-#if (EXISTS ${HOOT_HAVE_NODEJS_NODE_H})
-#    add_compile_definitions(HOOT_HAVE_NODEJS_NODE_H)
-#endif()
-#
-##find_path(HOOT_HAVE_NODE_NODE_H 
-#    NAMES node/node.h
-#    HINTS ${NODEJS_SEARCH_PATHS}
-#)
-#if (EXISTS ${HOOT_HAVE_NODE_NODE_H})
-#    add_compile_definitions(HOOT_HAVE_NODE_NODE_H)
-#endif()
 add_compile_definitions(HOOT_HAVE_NODE_NODE_H)
 
-#find_library(NODEJS_LIBS
-#    node
-#    HINTS /usr/lib/x86_64-linux-gnu/ /usr/lib64
-#    REQUIRED
-#)
-#set(NODEJS_LIBS "")
-
-#include(${CMAKE_CURRENT_SOURCE_DIR}/../conanbuildinfo.txt)
-#include(${CMAKE_CURRENT_LIST_DIR}/../conanbuildinfo.txt)
-#include(${CMAKE_BINARY_DIR}/conan_toolchain.cmake)
-#include("../conanbuildinfo.txt")
-#message(${CMAKE_CURRENT_SOURCE_DIR})
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
@@ -142,7 +64,6 @@ list(FILTER CONAN_LIBS EXCLUDE REGEX "^fontenc.*")
 list(FILTER CONAN_LIBS EXCLUDE REGEX "^X.*")
 list(FILTER CONAN_LIBS EXCLUDE REGEX "^xcb.*")
 list(FILTER CONAN_LIBS EXCLUDE REGEX "^uuid.*")
-#list(FILTER CONAN_LIBS EXCLUDE REGEX "^opencv.*")
 list(FILTER CONAN_LIBS EXCLUDE REGEX "^ICE*")
 list(FILTER CONAN_LIBS EXCLUDE REGEX "^SM*")
 list(FILTER CONAN_LIBS EXCLUDE REGEX "^xkbfile*")
@@ -342,25 +263,6 @@ file(GLOB_RECURSE HOOT_CORE_FILES CONFIGURE_DEPENDS
 list(REMOVE_ITEM HOOT_CORE_FILES 
     ${HOOT_CORE_SRC_PATH}/hoot/core/schema/PythonSchemaTranslator.cpp
 )
-
-# Remove libpostal dependencies, we can add this back later.
-#list(REMOVE_ITEM HOOT_CORE_FILES
-#    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/address/LibPostalInit.cpp
-#    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/address/AddressParser.cpp
-#    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/address/AddressNormalizer.cpp
-#    ${HOOT_CORE_SRC_PATH}/hoot/core/language/ToEnglishAddressTranslator.cpp
-#    ${HOOT_CORE_SRC_PATH}/hoot/core/schema/PythonSchemaTranslator.cpp
-#)
-
-# Remove phonenumber dependencies, we can add this back later.
-#list(REMOVE_ITEM HOOT_CORE_FILES 
-#    ${HOOT_CORE_SRC_PATH}/hoot/core/algorithms/extractors/poi-polygon/PoiPolygonPhoneNumberScoreExtractor.cpp
-#    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/phone/PhoneNumberLocator.cpp
-#    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/phone/PhoneNumberNormalizer.cpp
-#    ${HOOT_CORE_SRC_PATH}/hoot/core/conflate/phone/PhoneNumberParser.cpp
-#    ${HOOT_CORE_SRC_PATH}/hoot/core/visitors/NormalizePhoneNumbersVisitor.cpp
-#    ${HOOT_CORE_SRC_PATH}/hoot/core/visitors/PhoneNumberLocateVisitor.cpp
-#)
 
 # AUTOMOC doesn't work, probably due to our naming convention
 set(HOOT_CORE_MOC_PATH 
