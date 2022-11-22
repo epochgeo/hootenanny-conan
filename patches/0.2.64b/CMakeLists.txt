@@ -81,32 +81,6 @@ set(EXTRA_LIBS
     libgeocoding.a
     # link to node as a shared lib
 #   node
-    libv8_compiler.a
-    libv8_base_without_compiler.a
-    libv8_init.a
-    libv8_initializers.a
-    libv8_libbase.a
-    libv8_libplatform.a
-    libv8_libsampler.a
-    libv8_snapshot.a
-    libv8_zlib.a
-    libbrotli.a
-    libhistogram.a
-    libuvwasi.a
-    libuv.a
-    libcares.a
-    libllhttp.a
-    libnghttp2.a
-    libgtest.a
-    libgtest_main.a
-    libopenssl.a
-    libzlib.a
-    libicuucx.a
-    libicustubdata.a
-    libicui18n.a
-    libicudata.a
-    libtorque_base.a
-    
 )
 
 list(REMOVE_ITEM CONAN_LIBS ${EXTRA_LIBS})
