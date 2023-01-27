@@ -34,6 +34,7 @@ set(
     ${Qt5_LIBRARIES}
     ${STXXL_LIBRARIES}
     gssapi_krb5
+    /home/vagrant/.pyenv/versions/3.7.14/lib/libpython3.7m.so
 )
 
 set(
@@ -233,11 +234,6 @@ file(GLOB_RECURSE HOOT_CORE_FILES CONFIGURE_DEPENDS
     ${HOOT_CORE_SRC_PATH}/*.cpp
 )
 
-# Remove python translation -- not used much anymore
-list(REMOVE_ITEM HOOT_CORE_FILES 
-    ${HOOT_CORE_SRC_PATH}/hoot/core/schema/PythonSchemaTranslator.cpp
-)
-
 # AUTOMOC doesn't work, probably due to our naming convention
 set(HOOT_CORE_MOC_PATH 
     ${HOOT_CORE_SRC_PATH}/hoot/core/io/OgrWriterThread.h
@@ -263,6 +259,7 @@ target_include_directories(
     ${TGS_SRC_PATH}
     ${HOOT_JS_SRC_PATH}
     ${V8_HEADER_PATH}
+    /home/vagrant/.pyenv/versions/3.7.14/include/python3.7m
         
 )
 target_precompile_headers(

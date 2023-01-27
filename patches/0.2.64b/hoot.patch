@@ -500,6 +500,77 @@ index 23cd2f6..ba51244 100644
    /**
     * Return true if this tag can contain free-form text.
     */
+diff --git a/hoot-core/src/main/cpp/hoot/core/schema/PythonSchemaTranslator.cpp b/hoot-core/src/main/cpp/hoot/core/schema/PythonSchemaTranslator.cpp
+index a39d159..b0b052a 100644
+--- a/hoot-core/src/main/cpp/hoot/core/schema/PythonSchemaTranslator.cpp
++++ b/hoot-core/src/main/cpp/hoot/core/schema/PythonSchemaTranslator.cpp
+@@ -35,7 +35,11 @@
+ #endif
+ // Python requires that it be included before other files. Ugh.
+ // See http://docs.python.org/c-api/intro.html#includes
+-#include <Python.h>
++// "slots" is a Qt keyword, so ignore it here temporarily.
++#pragma push_macro("slots")
++#undef slots
++#include "Python.h"
++#pragma pop_macro("slots")
+ 
+ #include "PythonSchemaTranslator.h"
+ 
+@@ -70,10 +74,9 @@ void PythonSchemaTranslator::_init()
+   QStringList pythonPath;
+   QString moduleName;
+ 
+-  LOG_VART(_scriptPath);
++  QFileInfo info(_scriptPath);
+   if (_scriptPath.endsWith(".py"))
+   {
+-    QFileInfo info(_scriptPath);
+     if (info.exists() == false)
+     {
+       throw HootException("Unable to find translation module: " + _scriptPath);
+@@ -98,6 +101,8 @@ void PythonSchemaTranslator::_init()
+   LOG_DEBUG("Python path: " << pythonPath.join(":"));
+   setenv("PYTHONPATH", pythonPath.join(":").toUtf8().constData(), 1);
+   Py_Initialize();
++  PyObject *sys_path = PySys_GetObject("path");
++  PyList_Append(sys_path, PyUnicode_FromString(info.dir().absolutePath().toLatin1().data()));
+ 
+   const char* data = moduleName.toLatin1().data();
+   PyObject* module = PyImport_ImportModule(data);
+@@ -141,15 +146,17 @@ bool PythonSchemaTranslator::isValidScript()
+ void PythonSchemaTranslator::_finalize()
+ {
+   LOG_DEBUG("Finalizing Python");
+-  Py_DECREF((PyObject*)_translateFunction);
+-  Py_Finalize();
++  //Py_DECREF((PyObject*)_translateFunction);
++  //Py_Finalize();
++  //int errorCode = Py_FinalizeEx();
++  //LOG_VART(errorCode);
+ }
+ 
+ void PythonSchemaTranslator::_translateToOsm(
+   Tags& tags, const char* layerName, const char* geomType)
+ {
+-  PyObject* layerNamePy = PyString_FromString(layerName);
+-  PyObject* geomTypePy = PyString_FromString(geomType);
++  PyObject* layerNamePy = PyUnicode_FromString(layerName);
++  PyObject* geomTypePy = PyUnicode_FromString(geomType);
+   PyObject* attrs = PyDict_New();
+ 
+   for (Tags::const_iterator it = tags.begin(); it != tags.end(); ++it)
+@@ -209,8 +216,8 @@ void PythonSchemaTranslator::_translateToOsm(
+       QString qKey, qValue;
+ #       if (Py_UNICODE_SIZE == 4)
+       {
+-        qKey = QString::fromUcs4(keyUnicodeData);
+-        qValue = QString::fromUcs4(valueUnicodeData);
++        qKey = QString::fromWCharArray(keyUnicodeData);
++        qValue = QString::fromWCharArray(valueUnicodeData);
+       }
+ #       elif (Py_UNICODE_SIZE == 2)
+       {
 diff --git a/hoot-core/src/main/cpp/hoot/core/scoring/MatchComparator.cpp b/hoot-core/src/main/cpp/hoot/core/scoring/MatchComparator.cpp
 index 446ec2f..c7ab18e 100644
 --- a/hoot-core/src/main/cpp/hoot/core/scoring/MatchComparator.cpp
