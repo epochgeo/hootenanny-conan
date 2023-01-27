@@ -501,7 +501,7 @@ index 23cd2f6..ba51244 100644
     * Return true if this tag can contain free-form text.
     */
 diff --git a/hoot-core/src/main/cpp/hoot/core/schema/PythonSchemaTranslator.cpp b/hoot-core/src/main/cpp/hoot/core/schema/PythonSchemaTranslator.cpp
-index a39d159..b0b052a 100644
+index a39d159..918e7d8 100644
 --- a/hoot-core/src/main/cpp/hoot/core/schema/PythonSchemaTranslator.cpp
 +++ b/hoot-core/src/main/cpp/hoot/core/schema/PythonSchemaTranslator.cpp
 @@ -35,7 +35,11 @@
@@ -538,13 +538,15 @@ index a39d159..b0b052a 100644
  
    const char* data = moduleName.toLatin1().data();
    PyObject* module = PyImport_ImportModule(data);
-@@ -141,15 +146,17 @@ bool PythonSchemaTranslator::isValidScript()
- void PythonSchemaTranslator::_finalize()
+@@ -142,14 +147,20 @@ void PythonSchemaTranslator::_finalize()
  {
    LOG_DEBUG("Finalizing Python");
--  Py_DECREF((PyObject*)_translateFunction);
+   Py_DECREF((PyObject*)_translateFunction);
 -  Py_Finalize();
-+  //Py_DECREF((PyObject*)_translateFunction);
++  // Disabling finalization for now as it is crashing regardless of whether any py calls have been
++  // made or not. Since most translations are being done with a single instantiation of this class
++  // should be ok for the time being. Unfortunately, this will hang on to memory at the end of the
++  // process and require the process to be manually killed.
 +  //Py_Finalize();
 +  //int errorCode = Py_FinalizeEx();
 +  //LOG_VART(errorCode);
@@ -560,7 +562,7 @@ index a39d159..b0b052a 100644
    PyObject* attrs = PyDict_New();
  
    for (Tags::const_iterator it = tags.begin(); it != tags.end(); ++it)
-@@ -209,8 +216,8 @@ void PythonSchemaTranslator::_translateToOsm(
+@@ -209,8 +220,8 @@ void PythonSchemaTranslator::_translateToOsm(
        QString qKey, qValue;
  #       if (Py_UNICODE_SIZE == 4)
        {
