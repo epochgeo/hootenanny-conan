@@ -38,19 +38,6 @@ index d808da0..e6e0e07 100644
  === network.conflicts.aggression
  
  * Data Type: double
-diff --git a/conf/hoot.json b/conf/hoot.json
-index 97b5f77..c1d42b1 100644
---- a/conf/hoot.json
-+++ b/conf/hoot.json
-@@ -1,5 +1,7 @@
- {
-   "#": "Use this file for temporary testing of configuration option changes. Make permanent changes ",
-   "#": "in conf/ConfigOptions.asciidoc",
--  "#" : "end"
-+  "#" : "end",
-+  "#" : "this avoids an unexpected segfault during conflation. Weird.",
-+  "unify.enable.optimal.constrained.matches": "false"
- }
 diff --git a/hoot-core/src/main/cpp/hoot/core/Hoot.cpp b/hoot-core/src/main/cpp/hoot/core/Hoot.cpp
 index b36b359..1bc036a 100644
 --- a/hoot-core/src/main/cpp/hoot/core/Hoot.cpp
