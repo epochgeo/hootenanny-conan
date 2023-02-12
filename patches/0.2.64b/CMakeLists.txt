@@ -452,5 +452,7 @@ install(FILES ${HOOT_HOME}/scripts/HootEnv.sh DESTINATION bin)
 install(FILES ${HOOT_HOME}/scripts/RunHoot.sh DESTINATION bin RENAME hoot)
 install(DIRECTORY ${HOOT_HOME}/conf DESTINATION .)
 install(DIRECTORY ${CONAN_RES_DIRS_GDAL}/gdal DESTINATION .)
-install(FILES ${CONAN_RES_DIRS_PROJ}/proj.db DESTINATION .)
+#install(FILES ${CONAN_RES_DIRS_PROJ}/proj.db DESTINATION .)
+# Unfortunately, had to hard code this for now.
+install(FILES /home/vagrant/.conan/data/proj/8.1.1/_/_/package/3c22d1aeae6fad2520f159faf80aa959cdef282a/res/proj.db DESTINATION .)
 

@@ -51,7 +51,7 @@ class HootenannyConan(ConanFile):
         "libtiff/4.3.0",
         "liboauthcpp/0.1@test/debug",
         "libphonenumber/[>=8.12.27]@test/debug",
-        "zlib/1.2.11",
+        "zlib/1.2.13",
     ]
 
     generators = "cmake_find_package", "cmake", "qt"
@@ -125,7 +125,9 @@ class HootenannyConan(ConanFile):
         self.copy("*.dylib*", dst="lib", keep_path=False)
         self.copy("*.so", dst="lib", keep_path=False)
         self.copy("*.a", dst="lib", keep_path=False)
-        self.copy("proj.db", dst=".", keep_path=False)
+        # Unfortunately, had to	hard code this for now.
+        #self.copy("proj.db", dst=".", keep_path=False)
+        self.copy("/home/vagrant/.conan/data/proj/8.1.1/_/_/package/3c22d1aeae6fad2520f159faf80aa959cdef282a/res/proj.db", dst=".", keep_path=False)
         self.copy("ToyTest*.osm", dst="res/test-files", src="hoot/test-files/")
 
     def package_info(self):
