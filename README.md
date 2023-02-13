@@ -68,7 +68,7 @@ git config --global color.ui true
 JNI:
 ```
 find / -name jni_md.h 2> /dev/null
-# TODO: make this permanent
+# add to ~/.bashrc:
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.342.b07-1.el7_9.x86_64/include/linux/
 ```
 Set up Python env:
