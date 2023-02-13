@@ -26,7 +26,10 @@ sudo yum install -y git devtoolset-8-gcc devtoolset-8-gcc-c++ v8-devel glpk-deve
 sudo yum groupinstall -y "Development tools"
 sudo dnf install -y libfontenc-devel libXaw-devel libXdmcp-devel libXtst-devel libxkbfile-devel libXres-devel libXScrnSaver-devel libXvMC-devel xorg-x11-xtrans-devel xcb-util-wm-devel xcb-util-image-devel xcb-util-keysyms-devel xcb-util-renderutil-devel libXv-devel xcb-util-devel xkeyboard-config-devel
 sudo updatedb
-# Start using the gcc 8 tools, YOU'LL HAVE TO DO THIS EACH TIME YOU START A NEW SHELL
+```
+
+# Start using the gcc 8 tools, YOU'LL HAVE TO DO THIS EACH TIME YOU START A NEW SHELL. Add to ~/.bashrc:
+```
 source /opt/rh/devtoolset-8/enable
 ```
 
