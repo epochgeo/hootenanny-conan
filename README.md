@@ -1,7 +1,7 @@
 
 # Install
 
-## BDW 9/22/22
+## Last updated: 2/13/23
 
 Launch a CentOS 7 VM with the Vagrantfile in this repo and at least 60GB of disk space and login:
 ```
