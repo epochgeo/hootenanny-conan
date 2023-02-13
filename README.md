@@ -11,17 +11,6 @@ vagrant up (had to disable nfs in Vagrantfile)
 vagrant ssh
 ```
 
-
-```
-[hoot-deps]
-name = Hootenanny Dependencies
-baseurl = https://hoot-repo.s3.amazonaws.com/el7/deps/stable
-enable = 1
-gpgcheck = 1
-repo_gpgcheck = 1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-Hoot
-```
-
 Run [this script](https://github.com/ngageoint/hootenanny-rpms/blob/30149eb7d26ff69f15a1fa6b52d73e4d048b77a3/scripts/hoot-repo.sh) to add the Hootenanny repo. Then import the gpg key:
 ```
 gpg --import /etc/pki/rpm-gpg/RPM-GPG-KEY-Hoot
