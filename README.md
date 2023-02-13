@@ -91,8 +91,6 @@ eval "$(pyenv init --path)"
 
 Install py:
 ```
-# Instructions here are for 3.7, which is what using transvec with TDP requires. If 
-# you're not using TDP, then >= 3.6 will suffice.
 source ~/.bash_profile
 PYTHON_CONFIGURE_OPTS="--enable-shared --with-pic" pyenv install --force 3.7.14
 pyenv global 3.7.14
