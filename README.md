@@ -114,6 +114,7 @@ Install hoot conan and custom built deps:
 cd ~
 
 conan remote add sintef https://artifactory.smd.sintef.no/artifactory/api/conan/conan-local
+# you may need to turn off SSL verification in ~/.conan/remotes.json for conancenter
 
 source /opt/rh/devtoolset-8/enable
 
