@@ -122,7 +122,6 @@ git clone https://github.com/epochgeo/conan-libnode.git
 git clone https://github.com/epochgeo/conan-libphonenumber.git
 git clone https://github.com/epochgeo/hootenanny-conan.git
 cd hootenanny-conan
-rm -f ~/.conan/profiles/default
 ln -s `pwd`/hoot_profile ~/.conan/profiles/default
 
 cd ..
