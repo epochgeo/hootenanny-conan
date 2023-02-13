@@ -148,7 +148,7 @@ https://docs.conan.io/en/latest/developing_packages/package_dev_flow.html
 
 # Modifying Hootenanny
 
-Currently, we're working offline from the hoot repo as we have an older version of the code and aren't running tests locally. Where possible, make conflation related changes to `pyhoot` or your code that consumes `pyhoot`. However, there definitely will be times that is cleanest to make changes directly to hoot. To do do:
+Currently, we're working offline from the hoot repo as we have an older version of the code and aren't running tests locally. Where possible, make conflation related changes to `pyhoot` or your code that consumes `pyhoot`. However, there definitely will be times where its cleanest to make changes directly to hoot. To do do:
 * Make the code changes and compile.
 * `cd hootenanny-conan/build/hoot && git diff > ../../patches/0.2.64b/hoot.patch && cd ../..`
 This will ensure your changes are preserved when this project is rebuilt.
