@@ -3,7 +3,7 @@
 
 ## BDW 9/22/22
 
-Launch CentOS 7 VM and login:
+Launch a CentOS 7 VM with this Vagrantfile and at least 60GB of disk space and login:
 ```
 vagrant plugin install vagrant-bindfs
 cd pyhoot
