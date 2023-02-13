@@ -3,7 +3,7 @@
 
 ## BDW 9/22/22
 
-Launch a CentOS 7 VM with this Vagrantfile and at least 60GB of disk space and login:
+Launch a CentOS 7 VM with the Vagrantfile in this repo and at least 60GB of disk space and login:
 ```
 vagrant plugin install vagrant-bindfs
 cd pyhoot
@@ -11,7 +11,7 @@ vagrant up (had to disable nfs in Vagrantfile)
 vagrant ssh
 ```
 
-Add Hootenanny repo to `/etc/yum.repos.d/hoot.repo`:
+
 ```
 [hoot-deps]
 name = Hootenanny Dependencies
@@ -20,6 +20,11 @@ enable = 1
 gpgcheck = 1
 repo_gpgcheck = 1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-Hoot
+```
+
+Run [this script](https://github.com/ngageoint/hootenanny-rpms/blob/30149eb7d26ff69f15a1fa6b52d73e4d048b77a3/scripts/hoot-repo.sh) to add the Hootenanny repo. Then import the gpg key:
+```
+gpg --import /etc/pki/rpm-gpg/RPM-GPG-KEY-Hoot
 ```
 
 Install deps:
