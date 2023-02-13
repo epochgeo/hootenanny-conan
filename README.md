@@ -42,6 +42,7 @@ sudo make install
 cd /usr/bin
 sudo ln -s /usr/local/bin/cmake cmake
 cmake --version
+cd ~
 ```
 
 Example of setting up your ssh keys to clone from git (in case you forgot):
