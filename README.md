@@ -119,27 +119,23 @@ conan remote add sintef https://artifactory.smd.sintef.no/artifactory/api/conan/
 source /opt/rh/devtoolset-8/enable
 
 git clone https://github.com/epochgeo/liboauthcpp-conan.git
-git clone https://github.com/epochgeo/conan-libnode.git
-git clone https://github.com/epochgeo/conan-libphonenumber.git
-git clone https://github.com/epochgeo/hootenanny-conan.git
-cd hootenanny-conan
-ln -s `pwd`/hoot_profile ~/.conan/profiles/default
-
-cd ..
-
 cd liboauthcpp-conan
 make
 cd ..
 
+git clone https://github.com/epochgeo/conan-libphonenumber.git
 cd conan-libphonenumber
 make
 cd ..
 
+git clone https://github.com/epochgeo/conan-libnode.git
 cd conan-libnode
 make
 cd ..
 
+git clone https://github.com/epochgeo/hootenanny-conan.git
 cd hootenanny-conan
+ln -s `pwd`/hoot_profile ~/.conan/profiles/default
 make
 export HOOT_HOME=build/hoot/
 cd build/hoot
