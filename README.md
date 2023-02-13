@@ -28,7 +28,7 @@ sudo dnf install -y libfontenc-devel libXaw-devel libXdmcp-devel libXtst-devel l
 sudo updatedb
 ```
 
-# Start using the gcc 8 tools, YOU'LL HAVE TO DO THIS EACH TIME YOU START A NEW SHELL. Add to ~/.bashrc:
+Start using the gcc 8 tools. Add to ~/.bashrc:
 ```
 source /opt/rh/devtoolset-8/enable
 ```
