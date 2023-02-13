@@ -7,7 +7,7 @@ Launch a CentOS 7 VM with the Vagrantfile in this repo and at least 60GB of disk
 ```
 vagrant plugin install vagrant-bindfs
 cd pyhoot
-vagrant up (had to disable nfs in Vagrantfile)
+vagrant up
 vagrant ssh
 ```
 
@@ -28,7 +28,7 @@ sudo dnf install -y libfontenc-devel libXaw-devel libXdmcp-devel libXtst-devel l
 sudo updatedb
 ```
 
-Start using the gcc 8 tools. Add to ~/.bashrc:
+Start using the gcc 8 tools. Add to ~/.bash_profile:
 ```
 source /opt/rh/devtoolset-8/enable
 ```
@@ -72,7 +72,7 @@ git config --global color.ui true
 JNI:
 ```
 find / -name jni_md.h 2> /dev/null
-# add to ~/.bashrc:
+# add to ~/.bash_profile:
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.342.b07-1.el7_9.x86_64/include/linux/
 ```
 Set up Python env:
