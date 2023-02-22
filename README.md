@@ -1,8 +1,6 @@
 
 # Install
 
-## Last updated: 2/13/23
-
 Launch a CentOS 7 VM with the Vagrantfile in this repo and at least 60GB of disk space and login:
 ```
 vagrant plugin install vagrant-bindfs
@@ -106,15 +104,18 @@ pip install --upgrade setuptools
 
 Install Conan:
 ```
-pip install conan
+# This is the last 1.x version. Moving to 2.x will require several changes.
+pip install conan==1.59
 ```
+
+Configure Conan: Unfortunately there is a Conan bug that comes up from time to time regarding SSL verification when pulling dep packages. Add `self._verify_ssl = False` to the constructor of `/home/vagrant/.pyenv/versions/3.7.14/lib/python3.7/site-packages/conans/client/downloaders/file_downloader.py`.
 
 Install hoot conan and custom built deps:
 ```
 cd ~
 
-conan remote add sintef https://artifactory.smd.sintef.no/artifactory/api/conan/conan-local
-# you may need to turn off SSL verification in ~/.conan/remotes.json for conancenter
+# The '-f False' turns off SSL verification for the remote. You may need to also turn off SSL verification for conancenter by editing ~/.conan/remotes.json.
+conan remote add sintef https://artifactory.smd.sintef.no/artifactory/api/conan/conan-local -f False
 
 source /opt/rh/devtoolset-8/enable
 
