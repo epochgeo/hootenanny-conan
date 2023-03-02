@@ -1,4 +1,8 @@
 
+# Overview
+
+This is a project used to build [Hootenanny](https://github.com/ngageoint/hootenanny) using the open source package manager, [Conan](https://conan.io/). One specific use is to provide a Hootenanny build for use by [pyhoot](https://github.com/epochgeo/pyhoot).
+
 # Install
 
 ```
