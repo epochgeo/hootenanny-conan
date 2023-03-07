@@ -1,3 +1,19 @@
+diff --git a/conf/schema/name.json b/conf/schema/name.json
+index f34cd56..9d037af 100644
+--- a/conf/schema/name.json
++++ b/conf/schema/name.json
+@@ -13,6 +13,11 @@
+     },
+     {
+         "isA": "abstract_name",
++        "name": "alt_name:en",
++        "objectType": "tag"
++    },
++    {
++        "isA": "abstract_name",
+         "name": "int_name",
+         "objectType": "tag"
+     },
 diff --git a/hoot-core/src/main/cpp/hoot/core/Hoot.cpp b/hoot-core/src/main/cpp/hoot/core/Hoot.cpp
 index b36b359..1bc036a 100644
 --- a/hoot-core/src/main/cpp/hoot/core/Hoot.cpp
