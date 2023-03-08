@@ -99,6 +99,69 @@ index 2cb628e..91d1392 100644
      LOG_DEBUG("Protobuf Version:\t" << QString("%1.%2.%3")
                .arg(GOOGLE_PROTOBUF_VERSION / 1000000)
                .arg(GOOGLE_PROTOBUF_VERSION / 1000 % 1000)
+diff --git a/hoot-core/src/main/cpp/hoot/core/conflate/ConflateExecutor.cpp b/hoot-core/src/main/cpp/hoot/core/conflate/ConflateExecutor.cpp
+index aa71483..12b3763 100644
+--- a/hoot-core/src/main/cpp/hoot/core/conflate/ConflateExecutor.cpp
++++ b/hoot-core/src/main/cpp/hoot/core/conflate/ConflateExecutor.cpp
+@@ -293,17 +293,9 @@ void ConflateExecutor::conflate(const QString& input1, const QString& input2, co
+   _stats.append(SingleStat("Initial Element Count", initialElementCount));
+   OsmMapWriterFactory::writeDebugMap(map, className(), "after-load");
+ 
+-  if (!ConfigOptions().getConflatePreOps().empty())
+-  {
+-    _runConflateOps(map, true);
+-  }
+-
++  _runConflatePreOps(map);
+   _runConflate(map);
+-
+-  if (!ConfigOptions().getConflatePostOps().empty())
+-  {
+-    _runConflateOps(map, false);
+-  }
++  _runConflatePostOps(map);
+ 
+   // cleanup
+ 
+@@ -428,6 +420,22 @@ void ConflateExecutor::_load(
+   MemoryUsageChecker::getInstance().check();
+ }
+ 
++void ConflateExecutor::_runConflatePreOps(OsmMapPtr map)
++{
++  if (!ConfigOptions().getConflatePreOps().empty())
++  {
++    _runConflateOps(map, true);
++  }
++}
++
++void ConflateExecutor::_runConflatePostOps(OsmMapPtr map)
++{
++  if (!ConfigOptions().getConflatePostOps().empty())
++  {
++    _runConflateOps(map, false);
++  }
++}
++
+ void ConflateExecutor::_runConflate(OsmMapPtr& map)
+ {
+   if (_isDiffConflate)
+diff --git a/hoot-core/src/main/cpp/hoot/core/conflate/ConflateExecutor.h b/hoot-core/src/main/cpp/hoot/core/conflate/ConflateExecutor.h
+index 567a308..790b1b1 100644
+--- a/hoot-core/src/main/cpp/hoot/core/conflate/ConflateExecutor.h
++++ b/hoot-core/src/main/cpp/hoot/core/conflate/ConflateExecutor.h
+@@ -80,6 +80,11 @@ public:
+   void setDisplayChangesetStats(bool display) { _displayChangesetStats = display; }
+   void setOutputChangesetStatsFile(QString file) { _outputChangesetStatsFile = file; }
+ 
++protected:
++
++  virtual void _runConflatePreOps(OsmMapPtr map);
++  virtual void _runConflatePostOps(OsmMapPtr map);
++
+ private:
+ 
+   bool _isDiffConflate;
 diff --git a/hoot-core/src/main/cpp/hoot/core/conflate/matching/OptionsValidator.cpp b/hoot-core/src/main/cpp/hoot/core/conflate/matching/OptionsValidator.cpp
 index 7f85545..96dcb09 100644
 --- a/hoot-core/src/main/cpp/hoot/core/conflate/matching/OptionsValidator.cpp
