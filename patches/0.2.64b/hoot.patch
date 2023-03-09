@@ -181,6 +181,43 @@ index 7f85545..96dcb09 100644
    }
    mergerCreators = fixedMergerCreators;
  
+diff --git a/hoot-core/src/main/cpp/hoot/core/conflate/review/ReviewMarker.cpp b/hoot-core/src/main/cpp/hoot/core/conflate/review/ReviewMarker.cpp
+index 97d3e17..0f8c611 100644
+--- a/hoot-core/src/main/cpp/hoot/core/conflate/review/ReviewMarker.cpp
++++ b/hoot-core/src/main/cpp/hoot/core/conflate/review/ReviewMarker.cpp
+@@ -197,7 +197,8 @@ void ReviewMarker::mark(
+ 
+ void ReviewMarker::mark(
+   const OsmMapPtr& map, const std::vector<ElementId>& ids, const QString& note,
+-  const QString& reviewType, double score, const vector<QString>& choices) const
++  const QString& reviewType, double score, const vector<QString>& choices, 
++  const Tags& additionalTags) const
+ {
+   if (note.isEmpty())
+   {
+@@ -237,6 +238,8 @@ void ReviewMarker::mark(
+     r->getTags()[MetadataTags::HootReviewChoices() + ":" + QString::number(i+1)] = choices[i];
+   }
+ 
++  r->getTags().add(additionalTags);
++
+   map->addElement(r);
+ 
+   LOG_TRACE("Marked review: " << r);
+diff --git a/hoot-core/src/main/cpp/hoot/core/conflate/review/ReviewMarker.h b/hoot-core/src/main/cpp/hoot/core/conflate/review/ReviewMarker.h
+index c86e4d5..9738319 100644
+--- a/hoot-core/src/main/cpp/hoot/core/conflate/review/ReviewMarker.h
++++ b/hoot-core/src/main/cpp/hoot/core/conflate/review/ReviewMarker.h
+@@ -93,7 +93,8 @@ public:
+   void mark(
+     const OsmMapPtr& map, const std::vector<ElementId>& ids, const QString& note,
+     const QString& reviewType, double score = -1,
+-    const std::vector<QString>& choices = std::vector<QString>()) const;
++    const std::vector<QString>& choices = std::vector<QString>(), 
++    const Tags& additionalTags = Tags()) const;
+ 
+   static QString getBadGeometryType() { return _complexGeometryType; }
+ 
 diff --git a/hoot-core/src/main/cpp/hoot/core/elements/OsmMap.cpp b/hoot-core/src/main/cpp/hoot/core/elements/OsmMap.cpp
 index bc19982..f8edee9 100644
 --- a/hoot-core/src/main/cpp/hoot/core/elements/OsmMap.cpp
