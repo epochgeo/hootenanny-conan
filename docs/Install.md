@@ -54,7 +54,7 @@ rm -f cmake-3.24.1.tar.gz
 # ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519 -C brandon@epochgeo.com
 # eval "$(ssh-agent -s)"
 # chmod 600 ~/.ssh/id_ed25519.pub
-# ssh-add ~/.ssh/id_ed25519.pub
+# ssh-add ~/.ssh/id_ed25519
 # # Now add the public key contents to your github accounts.
 # cat ~/.ssh/id_ed25519.pub
 
